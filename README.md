@@ -28,7 +28,7 @@ DevConnect is a modern social platform designed specifically for the developer c
 
 ## 🤝 Contributing
 This project is currently in active development. 
-We welcome contributions from the developer community! Whether it's:
+I welcome contributions from the developer community! Whether it's:
 - Bug fixes
 - New features  
 - Documentation improvements
