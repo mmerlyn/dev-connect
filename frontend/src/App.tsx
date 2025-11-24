@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
 import { Home } from './pages/Home';
+import { Profile } from './pages/Profile';
 
 function App() {
   const { isAuthenticated, getCurrentUser } = useAuthStore();
@@ -38,6 +39,16 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Home />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/:username"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
               </Layout>
             </ProtectedRoute>
           }
