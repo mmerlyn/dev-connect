@@ -1,0 +1,211 @@
+# ===========================
+# DevConnect - Root .gitignore
+# ===========================
+
+# ===========================
+# Dependencies
+# ===========================
+node_modules/
+**/node_modules/
+
+# ===========================
+# Environment Variables
+# ===========================
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# Keep example env files
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# ===========================
+# Build Outputs
+# ===========================
+dist/
+build/
+*.tsbuildinfo
+
+# Frontend build
+frontend/dist/
+frontend/build/
+
+# Backend build
+backend/dist/
+backend/build/
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===========================
+# Testing & Coverage
+# ===========================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+
+# ===========================
+# Prisma
+# ===========================
+backend/node_modules/.prisma/
+
+# ===========================
+# Redis & Database
+# ===========================
+*.db
+*.sqlite
+*.sqlite3
+dump.rdb
+
+# ===========================
+# Docker
+# ===========================
+docker-compose.override.yml
+.dockerignore
+
+# ===========================
+# IDEs & Editors
+# ===========================
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ===========================
+# Operating Systems
+# ===========================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ===========================
+# Temporary Files
+# ===========================
+*.tmp
+*.temp
+tmp/
+temp/
+
+# ===========================
+# Uploads & Media (Development)
+# ===========================
+uploads/
+public/uploads/
+backend/uploads/
+frontend/public/uploads/
+
+# ===========================
+# AWS & Cloud Credentials
+# ===========================
+.aws/
+*.pem
+
+# ===========================
+# Miscellaneous
+# ===========================
+# Cache directories
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ===========================
+# Security & Secrets
+# ===========================
+*.key
+*.cert
+*.pem
+secrets/
+.secrets/
+
+# JWT secrets
+jwt-*.key
+
+# OAuth credentials
+oauth-*.json
+
+# ===========================
+# Project-Specific
+# ===========================
+# Design files
+DevConnect Design/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z

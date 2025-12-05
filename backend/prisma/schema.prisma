@@ -1,0 +1,215 @@
+// DevConnect Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String    @unique
+  password      String?   // Null for OAuth users
+  displayName   String
+  bio           String?
+  avatar        String?
+  banner        String?
+  skills        String[]  // ["TypeScript", "React"]
+  githubUrl     String?
+  linkedinUrl   String?
+  websiteUrl    String?
+  location      String?
+
+  // OAuth fields
+  githubId      String?   @unique
+  googleId      String?   @unique
+
+  // 2FA fields
+  twoFactorSecret String?
+  twoFactorEnabled Boolean @default(false)
+
+  // Relations
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  messages      Message[]  @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  notifications Notification[] @relation("NotificationRecipient")
+  sentNotifications Notification[] @relation("NotificationSender")
+
+  // Follow relationships
+  followers     Follow[]  @relation("Following")
+  following     Follow[]  @relation("Followers")
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastActive    DateTime  @default(now())
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+// Follow Model (many-to-many self-relation)
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+
+  follower    User     @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// Post Model
+model Post {
+  id          String    @id @default(uuid())
+  content     String
+  codeSnippet String?   @db.Text
+  language    String?   // For syntax highlighting
+  images      String[]
+  hashtags    String[]
+  views       Int       @default(0)
+
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  likes       Like[]
+  comments    Comment[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+// Comment Model (supports nested comments)
+model Comment {
+  id          String    @id @default(uuid())
+  content     String
+
+  postId      String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // For nested comments
+  parentId    String?
+  parent      Comment?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("Replies")
+
+  likes       Like[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+// Like Model (polymorphic - can like posts or comments)
+model Like {
+  id          String    @id @default(uuid())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId      String?
+  post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  commentId   String?
+  comment     Comment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([postId])
+  @@index([commentId])
+  @@map("likes")
+}
+
+// Message Model (direct messaging)
+model Message {
+  id          String    @id @default(uuid())
+  content     String    @db.Text
+  read        Boolean   @default(false)
+
+  senderId    String
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  recipientId String
+  recipient   User      @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// Notification Model
+model Notification {
+  id          String    @id @default(uuid())
+  type        NotificationType
+  content     String
+  read        Boolean   @default(false)
+
+  // Related entities
+  postId      String?
+  commentId   String?
+
+  recipientId String
+  recipient   User      @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  senderId    String?
+  sender      User?     @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([recipientId])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE_POST
+  LIKE_COMMENT
+  COMMENT_POST
+  REPLY_COMMENT
+  FOLLOW
+  MENTION
+}
+
+// Hashtag Model (for tracking and trending)
+model Hashtag {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  count       Int       @default(1)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([name])
+  @@index([count])
+  @@map("hashtags")
+}
