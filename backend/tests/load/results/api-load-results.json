@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-01-30T05:40:20.762Z",
+  "testName": "API Load Test - 1000 Concurrent Users",
+  "results": {
+    "peakConcurrentUsers": 1000,
+    "totalRequests": 2142599,
+    "successfulRequests": 2139952,
+    "failedRequests": 2647,
+    "successRate": "99.88%",
+    "latency": {
+      "avg": "1.83",
+      "p50": "1.00",
+      "p95": "7.00",
+      "p99": "0",
+      "max": "216.00"
+    },
+    "httpLatency": {
+      "avg": "1.80",
+      "p95": "6.83"
+    }
+  },
+  "thresholds": {
+    "1000ConcurrentUsers": true,
+    "sub100msLatency": true,
+    "95PercentSuccess": true
+  },
+  "passed": true
+}

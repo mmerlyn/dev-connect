@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-30T05:37:06.186Z",
+  "testName": "Event Throughput Test - 50+ Events/Sec",
+  "results": {
+    "totalEventsProcessed": 12001,
+    "testDurationSeconds": 120,
+    "eventsPerSecond": "100.01",
+    "latency": {
+      "avg": "0.54",
+      "p95": "1.00",
+      "p99": "0",
+      "max": "45.00"
+    },
+    "successRate": "100.00%"
+  },
+  "thresholds": {
+    "50EventsPerSec": true,
+    "sub100msLatency": true,
+    "95PercentSuccess": true
+  },
+  "passed": true
+}

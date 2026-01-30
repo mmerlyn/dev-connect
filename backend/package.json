@@ -14,7 +14,11 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "test:load": "./tests/load/run-load-tests.sh all",
+    "test:load:concurrent": "./tests/load/run-load-tests.sh concurrent",
+    "test:load:throughput": "./tests/load/run-load-tests.sh throughput",
+    "test:load:quick": "./tests/load/run-load-tests.sh quick"
   },
   "keywords": [
     "social-network",
