@@ -1,4 +1,5 @@
 import { prisma } from '../../shared/database/client.js';
+import { SocketService } from '../../shared/socket/socket.service.js';
 
 export class PostsService {
   // Create post
@@ -241,7 +242,7 @@ export class PostsService {
 
     // Create notification if not own post
     if (post.authorId !== userId) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           type: 'LIKE_POST',
           content: 'liked your post',
@@ -249,7 +250,19 @@ export class PostsService {
           senderId: userId,
           postId,
         },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatar: true,
+            },
+          },
+        },
       });
+      // Emit real-time notification
+      SocketService.sendNotification(post.authorId, notification);
     }
 
     return like;
@@ -332,5 +345,73 @@ export class PostsService {
         create: { name, count: 1 },
       });
     }
+  }
+
+  // Get posts liked by a user
+  static async getUserLikedPosts(userId: string, requestingUserId?: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+
+    const [likes, total] = await Promise.all([
+      prisma.like.findMany({
+        where: {
+          userId,
+          postId: { not: null },
+        },
+        skip,
+        take: limit,
+        include: {
+          post: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  username: true,
+                  displayName: true,
+                  avatar: true,
+                },
+              },
+              _count: {
+                select: {
+                  likes: true,
+                  comments: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.like.count({
+        where: {
+          userId,
+          postId: { not: null },
+        },
+      }),
+    ]);
+
+    // Filter out null posts and extract post data
+    const posts = likes
+      .filter((like) => like.post !== null)
+      .map((like) => like.post!);
+
+    // Check if requesting user has liked each post
+    if (requestingUserId) {
+      const postsWithLikeStatus = await Promise.all(
+        posts.map(async (post) => {
+          const isLiked = await prisma.like.findUnique({
+            where: {
+              userId_postId: {
+                userId: requestingUserId,
+                postId: post.id,
+              },
+            },
+          });
+          return { ...post, isLiked: !!isLiked };
+        })
+      );
+      return { posts: postsWithLikeStatus, total, page, limit };
+    }
+
+    return { posts, total, page, limit };
   }
 }

@@ -25,6 +25,14 @@ export const useUserPosts = (userId: string, page = 1, limit = 20) => {
   });
 };
 
+export const useUserLikedPosts = (userId: string, page = 1, limit = 20) => {
+  return useQuery({
+    queryKey: ['userLikedPosts', userId, page, limit],
+    queryFn: () => usersApi.getUserLikedPosts(userId, page, limit),
+    enabled: !!userId,
+  });
+};
+
 export const useFollowUser = () => {
   const queryClient = useQueryClient();
 
@@ -65,6 +73,17 @@ export const useUpdateAvatar = () => {
 
   return useMutation({
     mutationFn: usersApi.updateAvatar,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
+  });
+};
+
+export const useUpdateBanner = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: usersApi.updateBanner,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },

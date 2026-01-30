@@ -32,6 +32,15 @@ model User {
   twoFactorSecret String?
   twoFactorEnabled Boolean @default(false)
 
+  // Email verification fields
+  emailVerified    Boolean   @default(false)
+  emailVerifyToken String?
+  emailVerifyExpires DateTime?
+
+  // Password reset fields
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+
   // Relations
   posts         Post[]
   comments      Comment[]

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { useUser, useUserPosts, useFollowUser, useUnfollowUser } from '../hooks/useUsers';
+import { useUser, useUserPosts, useUserLikedPosts, useFollowUser, useUnfollowUser } from '../hooks/useUsers';
 import { PostCard } from '../components';
+import { EditProfileModal } from '../components/profile/EditProfileModal';
 
 export const Profile = () => {
   const { username } = useParams<{ username: string }>();
@@ -14,9 +15,15 @@ export const Profile = () => {
     1,
     20
   );
+  const { data: likedPostsData, isLoading: likedPostsLoading } = useUserLikedPosts(
+    profileUser?.id || '',
+    1,
+    20
+  );
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
   const [activeTab, setActiveTab] = useState<'posts' | 'likes'>('posts');
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const isOwnProfile = currentUser?.id === profileUser?.id;
   const isFollowing = profileUser?.isFollowing || false;
@@ -62,20 +69,32 @@ export const Profile = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Profile Header */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
-          {/* Avatar */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
-            {profileUser.avatar ? (
-              <img
-                src={profileUser.avatar}
-                alt={profileUser.displayName}
-                className="w-24 h-24 rounded-full object-cover"
-              />
-            ) : (
-              profileUser.displayName.charAt(0).toUpperCase()
-            )}
-          </div>
+      <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+        {/* Banner */}
+        <div className="h-32 sm:h-48 bg-gradient-to-r from-blue-400 to-purple-500 relative">
+          {profileUser.banner && (
+            <img
+              src={profileUser.banner}
+              alt="Profile banner"
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+
+        <div className="p-6 -mt-12 sm:-mt-16 relative">
+          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+            {/* Avatar */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 border-4 border-white shadow-lg">
+              {profileUser.avatar ? (
+                <img
+                  src={profileUser.avatar}
+                  alt={profileUser.displayName}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                profileUser.displayName.charAt(0).toUpperCase()
+              )}
+            </div>
 
           {/* User Info */}
           <div className="flex-1">
@@ -175,12 +194,12 @@ export const Profile = () => {
           {/* Action Buttons */}
           <div className="flex flex-col space-y-2 w-full md:w-auto">
             {isOwnProfile ? (
-              <Link
-                to="/settings"
+              <button
+                onClick={() => setShowEditModal(true)}
                 className="px-6 py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors font-medium text-center"
               >
                 Edit Profile
-              </Link>
+              </button>
             ) : (
               <button
                 onClick={handleFollowToggle}
@@ -207,6 +226,7 @@ export const Profile = () => {
               </button>
             )}
           </div>
+        </div>
         </div>
       </div>
 
@@ -257,12 +277,35 @@ export const Profile = () => {
           postsData &&
           postsData.data.map((post) => <PostCard key={post.id} post={post} />)}
 
-        {activeTab === 'likes' && (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-500">Liked posts coming soon...</p>
+        {activeTab === 'likes' && likedPostsLoading && (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-4">Loading liked posts...</p>
           </div>
         )}
+
+        {activeTab === 'likes' && !likedPostsLoading && likedPostsData && likedPostsData.data.length === 0 && (
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <p className="text-gray-500">
+              {isOwnProfile ? "You haven't liked any posts yet." : 'No liked posts yet.'}
+            </p>
+          </div>
+        )}
+
+        {activeTab === 'likes' &&
+          !likedPostsLoading &&
+          likedPostsData &&
+          likedPostsData.data.map((post) => <PostCard key={post.id} post={post} />)}
       </div>
+
+      {/* Edit Profile Modal */}
+      {profileUser && (
+        <EditProfileModal
+          user={profileUser}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 };

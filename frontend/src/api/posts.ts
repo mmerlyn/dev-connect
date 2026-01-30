@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Post, ApiResponse, PaginatedResponse } from '../types';
+import type { Post, Comment, ApiResponse, PaginatedResponse } from '../types';
 
 export const postsApi = {
   // Get all posts (feed)
@@ -49,14 +49,41 @@ export const postsApi = {
   },
 
   // Get post comments
-  getComments: async (postId: string) => {
-    const response = await apiClient.get(`/posts/${postId}/comments`);
+  getComments: async (postId: string, page = 1, limit = 20): Promise<{ comments: Comment[]; total: number }> => {
+    const response = await apiClient.get(`/posts/${postId}/comments?page=${page}&limit=${limit}`);
     return response.data.data;
   },
 
   // Add comment
-  addComment: async (postId: string, content: string) => {
+  addComment: async (postId: string, content: string): Promise<Comment> => {
     const response = await apiClient.post(`/posts/${postId}/comments`, { content });
     return response.data.data;
+  },
+
+  // Delete comment
+  deleteComment: async (commentId: string): Promise<void> => {
+    await apiClient.delete(`/posts/comments/${commentId}`);
+  },
+
+  // Reply to comment
+  replyToComment: async (commentId: string, content: string): Promise<Comment> => {
+    const response = await apiClient.post(`/posts/comments/${commentId}/reply`, { content });
+    return response.data.data;
+  },
+
+  // Get comment replies
+  getCommentReplies: async (commentId: string, page = 1, limit = 20): Promise<{ replies: Comment[]; total: number }> => {
+    const response = await apiClient.get(`/posts/comments/${commentId}/replies?page=${page}&limit=${limit}`);
+    return response.data.data;
+  },
+
+  // Like comment
+  likeComment: async (commentId: string): Promise<void> => {
+    await apiClient.post(`/posts/comments/${commentId}/like`);
+  },
+
+  // Unlike comment
+  unlikeComment: async (commentId: string): Promise<void> => {
+    await apiClient.delete(`/posts/comments/${commentId}/like`);
   },
 };

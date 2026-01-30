@@ -1,4 +1,5 @@
 import { prisma } from '../../shared/database/client.js';
+import { SocketService } from '../../shared/socket/socket.service.js';
 
 export class CommentsService {
   // Get post comments (only top-level, with replies count)
@@ -110,7 +111,7 @@ export class CommentsService {
 
     // Create notification if not own post
     if (post.authorId !== userId) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           type: 'COMMENT_POST',
           content: 'commented on your post',
@@ -119,7 +120,19 @@ export class CommentsService {
           postId,
           commentId: comment.id,
         },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatar: true,
+            },
+          },
+        },
       });
+      // Emit real-time notification
+      SocketService.sendNotification(post.authorId, notification);
     }
 
     return comment;
@@ -162,7 +175,7 @@ export class CommentsService {
 
     // Create notification for comment author
     if (parentComment.authorId !== userId) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           type: 'REPLY_COMMENT',
           content: 'replied to your comment',
@@ -171,7 +184,19 @@ export class CommentsService {
           postId: parentComment.postId,
           commentId: reply.id,
         },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatar: true,
+            },
+          },
+        },
       });
+      // Emit real-time notification
+      SocketService.sendNotification(parentComment.authorId, notification);
     }
 
     return reply;
@@ -268,7 +293,7 @@ export class CommentsService {
 
     // Create notification if not own comment
     if (comment.authorId !== userId) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           type: 'LIKE_COMMENT',
           content: 'liked your comment',
@@ -276,7 +301,19 @@ export class CommentsService {
           senderId: userId,
           commentId,
         },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatar: true,
+            },
+          },
+        },
       });
+      // Emit real-time notification
+      SocketService.sendNotification(comment.authorId, notification);
     }
 
     return like;

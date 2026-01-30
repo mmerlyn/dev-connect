@@ -19,6 +19,13 @@ export const usersApi = {
     return response.data.data!;
   },
 
+  getUserLikedPosts: async (userId: string, page = 1, limit = 20): Promise<PaginatedResponse<Post>> => {
+    const response = await apiClient.get<ApiResponse<PaginatedResponse<Post>>>(
+      `/users/${userId}/likes?page=${page}&limit=${limit}`
+    );
+    return response.data.data!;
+  },
+
   followUser: async (userId: string): Promise<void> => {
     await apiClient.post(`/users/${userId}/follow`);
   },
@@ -31,8 +38,9 @@ export const usersApi = {
     displayName?: string;
     bio?: string;
     location?: string;
-    website?: string;
-    githubUsername?: string;
+    websiteUrl?: string;
+    githubUrl?: string;
+    linkedinUrl?: string;
     skills?: string[];
   }): Promise<User> => {
     const response = await apiClient.patch<ApiResponse<User>>('/users/profile', data);
@@ -44,6 +52,21 @@ export const usersApi = {
     formData.append('avatar', file);
     const response = await apiClient.post<ApiResponse<{ avatarUrl: string }>>(
       '/users/avatar',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data!;
+  },
+
+  updateBanner: async (file: File): Promise<{ bannerUrl: string }> => {
+    const formData = new FormData();
+    formData.append('banner', file);
+    const response = await apiClient.post<ApiResponse<{ bannerUrl: string }>>(
+      '/users/banner',
       formData,
       {
         headers: {

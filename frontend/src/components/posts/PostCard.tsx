@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import type { Post } from '../../types';
 import { useLikePost, useUnlikePost, useDeletePost } from '../../hooks/usePosts';
 import { useAuthStore } from '../../store/authStore';
+import { CommentSection } from './CommentSection';
 
 interface PostCardProps {
   post: Post;
@@ -47,9 +48,17 @@ export const PostCard = ({ post }: PostCardProps) => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <Link to={`/profile/${post.author.username}`}>
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium">
-              {post.author.displayName.charAt(0).toUpperCase()}
-            </div>
+            {post.author.avatar ? (
+              <img
+                src={post.author.avatar}
+                alt={post.author.displayName}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium">
+                {post.author.displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
           </Link>
           <div>
             <Link
@@ -78,9 +87,40 @@ export const PostCard = ({ post }: PostCardProps) => {
       </div>
 
       {/* Content */}
-      <div className="mb-4">
-        <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-      </div>
+      <Link to={`/post/${post.id}`} className="block mb-4 group">
+        <p className="text-gray-800 whitespace-pre-wrap group-hover:text-gray-600 transition-colors">{post.content}</p>
+      </Link>
+
+      {/* Images */}
+      {post.images && post.images.length > 0 && (
+        <div className="mb-4">
+          <div className={`grid gap-2 ${
+            post.images.length === 1 ? 'grid-cols-1' :
+            post.images.length === 2 ? 'grid-cols-2' :
+            post.images.length === 3 ? 'grid-cols-2' :
+            'grid-cols-2'
+          }`}>
+            {post.images.map((image, index) => (
+              <div
+                key={index}
+                className={`relative ${
+                  post.images.length === 3 && index === 0 ? 'row-span-2' : ''
+                }`}
+              >
+                <img
+                  src={image}
+                  alt={`Post image ${index + 1}`}
+                  className={`w-full object-cover rounded-lg ${
+                    post.images.length === 1 ? 'max-h-96' :
+                    post.images.length === 3 && index === 0 ? 'h-full' :
+                    'h-48'
+                  }`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Code Snippet */}
       {post.codeSnippet && (
@@ -100,9 +140,13 @@ export const PostCard = ({ post }: PostCardProps) => {
       {post.hashtags && post.hashtags.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
           {post.hashtags.map((tag) => (
-            <span key={tag} className="text-blue-600 text-sm hover:underline cursor-pointer">
-              #{tag}
-            </span>
+            <Link
+              key={tag}
+              to={`/hashtag/${tag.replace('#', '')}`}
+              className="text-blue-600 text-sm hover:underline"
+            >
+              {tag.startsWith('#') ? tag : `#${tag}`}
+            </Link>
           ))}
         </div>
       )}
@@ -166,11 +210,7 @@ export const PostCard = ({ post }: PostCardProps) => {
       </div>
 
       {/* Comments Section */}
-      {showComments && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-sm text-gray-500">Comments section coming soon...</p>
-        </div>
-      )}
+      {showComments && <CommentSection postId={post.id} />}
     </div>
   );
 };

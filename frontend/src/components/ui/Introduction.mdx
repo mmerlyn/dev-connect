@@ -1,0 +1,48 @@
+# DevConnect UI Component Library
+
+Welcome to the **DevConnect UI Component Library** -- a collection of reusable, accessible, and composable React components built with Tailwind CSS. These components form the foundation of the DevConnect application interface.
+
+## Getting Started
+
+All components live under `src/components/ui/` and follow a consistent API pattern. Each component:
+
+- Is fully typed with TypeScript
+- Supports Tailwind CSS class overrides via the `className` prop
+- Uses the `cn()` utility from `lib/utils` for merging class names
+
+Import any component directly:
+
+```tsx
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+```
+
+## Components
+
+The library includes the following **16 components**:
+
+| Component       | Description                                                  |
+| --------------- | ------------------------------------------------------------ |
+| **Button**      | Primary action element with variants, sizes, and loading state |
+| **Input**       | Text input field with label, error message, and icon support |
+| **TextArea**    | Multi-line text input with auto-resize and character count   |
+| **Avatar**      | User profile image with fallback initials and status indicator |
+| **Badge**       | Small label for status, tags, or counts                      |
+| **Modal**       | Dialog overlay with focus trapping and keyboard dismissal    |
+| **Card**        | Contained surface for grouping related content               |
+| **Dropdown**    | Menu with selectable options, triggered by a button          |
+| **Tabs**        | Tabbed navigation for switching between content panels       |
+| **Tooltip**     | Contextual popup triggered on hover or focus                 |
+| **Skeleton**    | Placeholder loading animation for content                    |
+| **Toast**       | Temporary notification banner with auto-dismiss              |
+| **Spinner**     | Animated loading indicator with configurable size            |
+| **EmptyState**  | Placeholder view for empty lists or zero-result screens      |
+| **SearchInput** | Search-specific input with icon, clear button, and debounce  |
+| **Toggle**      | Binary on/off switch for toggling settings                   |
+
+## Design Principles
+
+- **Composability** -- Components are small, focused, and can be combined to build complex interfaces.
+- **Consistency** -- Shared design tokens (colors, spacing, radii) come from the Tailwind theme defined in `index.css`.
+- **Accessibility** -- Keyboard navigation, ARIA attributes, and focus management are built in where applicable.
+- **Flexibility** -- Every component accepts a `className` prop so consumers can extend or override styles without friction.

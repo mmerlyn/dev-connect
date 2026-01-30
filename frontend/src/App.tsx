@@ -4,9 +4,18 @@ import { useAuthStore } from './store/authStore';
 import { ProtectedRoute, Layout } from './components';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
+import { OAuthCallback } from './pages/OAuthCallback';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { Home } from './pages/Home';
 import { Profile } from './pages/Profile';
+import { Post } from './pages/Post';
 import { Messages } from './pages/Messages';
+import { Notifications } from './pages/Notifications';
+import { Explore } from './pages/Explore';
+import { Hashtag } from './pages/Hashtag';
+import { Settings } from './pages/Settings';
 
 function App() {
   const { isAuthenticated, getCurrentUser } = useAuthStore();
@@ -31,6 +40,16 @@ function App() {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" replace /> : <SignUp />}
         />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
+        <Route
+          path="/forgot-password"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <ForgotPassword />}
+        />
+        <Route
+          path="/reset-password"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <ResetPassword />}
+        />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* Protected routes */}
         <Route
@@ -54,11 +73,61 @@ function App() {
           }
         />
         <Route
+          path="/post/:postId"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Post />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/messages"
           element={
             <ProtectedRoute>
               <Layout>
                 <Messages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Notifications />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Explore />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hashtag/:tag"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Hashtag />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
               </Layout>
             </ProtectedRoute>
           }

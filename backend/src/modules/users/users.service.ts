@@ -1,5 +1,7 @@
 import { prisma } from '../../shared/database/client.js';
 import { AuthUtils } from '../../shared/utils/auth.utils.js';
+import { SocketService } from '../../shared/socket/socket.service.js';
+import { UploadService } from '../../shared/services/upload.service.js';
 
 export class UsersService {
   // Get all users with pagination
@@ -141,14 +143,26 @@ export class UsersService {
     });
 
     // Create notification
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         type: 'FOLLOW',
         content: 'started following you',
         recipientId: followingId,
         senderId: followerId,
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+          },
+        },
+      },
     });
+    // Emit real-time notification
+    SocketService.sendNotification(followingId, notification);
 
     return follow;
   }
@@ -244,5 +258,55 @@ export class UsersService {
       page,
       limit,
     };
+  }
+
+  // Update user avatar
+  static async updateAvatar(userId: string, file: Express.Multer.File) {
+    // Get current user to check for existing avatar
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatar: true },
+    });
+
+    // Delete old avatar if exists
+    if (currentUser?.avatar) {
+      await UploadService.deleteFile(currentUser.avatar);
+    }
+
+    // Upload new avatar
+    const { url } = await UploadService.uploadAvatar(file);
+
+    // Update user with new avatar URL
+    await prisma.user.update({
+      where: { id: userId },
+      data: { avatar: url },
+    });
+
+    return { avatarUrl: url };
+  }
+
+  // Update user banner
+  static async updateBanner(userId: string, file: Express.Multer.File) {
+    // Get current user to check for existing banner
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { banner: true },
+    });
+
+    // Delete old banner if exists
+    if (currentUser?.banner) {
+      await UploadService.deleteFile(currentUser.banner);
+    }
+
+    // Upload new banner
+    const { url } = await UploadService.uploadBanner(file);
+
+    // Update user with new banner URL
+    await prisma.user.update({
+      where: { id: userId },
+      data: { banner: url },
+    });
+
+    return { bannerUrl: url };
   }
 }

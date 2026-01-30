@@ -9,3 +9,6 @@ export * from './posts';
 
 // Chat components
 export * from './chat';
+
+// UI components
+export * from './ui';

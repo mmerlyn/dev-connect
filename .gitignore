@@ -194,6 +194,19 @@ jwt-*.key
 oauth-*.json
 
 # ===========================
+# AI Tools & Local Settings
+# ===========================
+.claude/
+
+# ===========================
+# ML Models (Generated)
+# ===========================
+# Ignore model files but keep directory structure
+backend/models/**/model.json
+backend/models/**/weights*.bin
+backend/models/**/*.h5
+
+# ===========================
 # Project-Specific
 # ===========================
 # Design files

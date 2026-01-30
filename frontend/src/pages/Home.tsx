@@ -1,10 +1,32 @@
+import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { usePosts } from '../hooks/usePosts';
+import { useRecommendedFeed, useTrendingPosts, useFollowingFeed } from '../hooks/useFeed';
 import { PostForm, PostCard } from '../components';
+
+type FeedTab = 'foryou' | 'following' | 'trending';
 
 export const Home = () => {
   const { user } = useAuthStore();
-  const { data, isLoading, error } = usePosts();
+  const [activeTab, setActiveTab] = useState<FeedTab>('foryou');
+
+  const recommended = useRecommendedFeed();
+  const following = useFollowingFeed();
+  const trending = useTrendingPosts();
+
+  const tabs: { key: FeedTab; label: string }[] = [
+    { key: 'foryou', label: 'For You' },
+    { key: 'following', label: 'Following' },
+    { key: 'trending', label: 'Trending' },
+  ];
+
+  const feedMap = {
+    foryou: recommended,
+    following: following,
+    trending: trending,
+  };
+
+  const activeFeed = feedMap[activeTab];
+  const { data, isLoading, error } = activeFeed;
 
   return (
     <div className="max-w-4xl mx-auto px-4">
@@ -17,6 +39,25 @@ export const Home = () => {
 
       {/* Create Post Form */}
       <PostForm />
+
+      {/* Feed Tab Switcher */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.key
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       {/* Posts Feed */}
       <div className="space-y-6">
@@ -35,7 +76,13 @@ export const Home = () => {
 
         {data && data.data.length === 0 && (
           <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-500">No posts yet. Be the first to share something!</p>
+            <p className="text-gray-500">
+              {activeTab === 'following'
+                ? 'Follow some developers to see their posts here!'
+                : activeTab === 'foryou'
+                ? 'Interact with posts to get personalized recommendations!'
+                : 'No trending posts yet. Be the first to share something!'}
+            </p>
           </div>
         )}
 

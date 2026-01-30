@@ -1,4 +1,5 @@
 import { prisma } from '../../shared/database/client.js';
+import { SocketService } from '../../shared/socket/socket.service.js';
 
 export class ChatService {
   // Get user conversations
@@ -159,6 +160,9 @@ export class ChatService {
         },
       },
     });
+
+    // Emit real-time message to recipient
+    SocketService.sendMessage(recipientId, message);
 
     return message;
   }

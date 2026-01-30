@@ -68,6 +68,11 @@ export class ResponseUtils {
     return this.error(res, message, 404);
   }
 
+  // Bad request response
+  static badRequest(res: Response, message: string = 'Bad request') {
+    return this.error(res, message, 400);
+  }
+
   // Internal server error
   static serverError(res: Response, message: string = 'Internal server error') {
     return this.error(res, message, 500);
