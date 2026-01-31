@@ -18,7 +18,7 @@ export class SearchController {
       const results = await SearchService.universalSearch(query, page, limit);
       return ResponseUtils.success(res, results);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -36,7 +36,7 @@ export class SearchController {
       const result = await SearchService.searchUsers(query, page, limit);
       return ResponseUtils.paginated(res, result.users, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -54,7 +54,7 @@ export class SearchController {
       const result = await SearchService.searchPosts(query, page, limit);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -69,7 +69,7 @@ export class SearchController {
       const hashtags = await SearchService.searchHashtags(query);
       return ResponseUtils.success(res, hashtags);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -82,7 +82,7 @@ export class SearchController {
       const result = await SearchService.getPostsByHashtag(req.params.tag, page, limit);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

@@ -15,8 +15,8 @@ if (config.oauth.github.clientId && config.oauth.github.clientSecret) {
         scope: ['user:email'],
       },
       async (
-        accessToken: string,
-        refreshToken: string,
+        _accessToken: string,
+        _refreshToken: string,
         profile: any,
         done: (error: any, user?: any) => void
       ) => {
@@ -99,8 +99,8 @@ if (config.oauth.google.clientId && config.oauth.google.clientSecret) {
         scope: ['profile', 'email'],
       },
       async (
-        accessToken: string,
-        refreshToken: string,
+        _accessToken: string,
+        _refreshToken: string,
         profile: any,
         done: (error: any, user?: any) => void
       ) => {

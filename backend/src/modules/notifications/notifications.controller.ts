@@ -28,7 +28,7 @@ export class NotificationsController {
         unreadCount: result.unreadCount,
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -41,7 +41,7 @@ export class NotificationsController {
       await NotificationsService.markAsRead(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Notification marked as read');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -54,7 +54,7 @@ export class NotificationsController {
       await NotificationsService.markAllAsRead(req.user.id);
       return ResponseUtils.success(res, null, 'All notifications marked as read');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -67,7 +67,7 @@ export class NotificationsController {
       await NotificationsService.deleteNotification(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Notification deleted successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -80,7 +80,7 @@ export class NotificationsController {
       const result = await NotificationsService.getUnreadCount(req.user.id);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

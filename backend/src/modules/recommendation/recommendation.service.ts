@@ -1,5 +1,5 @@
 import { prisma } from '../../shared/database/client.js';
-import { redisClient } from '../../shared/database/redis.js';
+import { redisCache } from '../../shared/database/redis.js';
 import { FeatureService } from './feature.service.js';
 import { ModelService } from './model.service.js';
 import {
@@ -18,15 +18,11 @@ export class RecommendationService {
     page: number = 1,
     limit: number = 20
   ): Promise<{ posts: any[]; total: number; page: number; limit: number }> {
-    // Check cache
+    // Check cache (returns null if Redis unavailable)
     const cacheKey = `${REC_CACHE_PREFIX}${userId}:${page}`;
-    try {
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch {
-      // Cache miss
+    const cached = await redisCache.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
     }
 
     // Check if user has enough interactions for ML
@@ -99,16 +95,8 @@ export class RecommendationService {
       limit,
     };
 
-    // Cache for 10 minutes
-    try {
-      await redisClient.setEx(
-        cacheKey,
-        RECOMMENDATION_CONFIG.cacheTTL,
-        JSON.stringify(result)
-      );
-    } catch {
-      // Non-fatal
-    }
+    // Cache for 10 minutes (no-op if Redis unavailable)
+    await redisCache.set(cacheKey, JSON.stringify(result), RECOMMENDATION_CONFIG.cacheTTL);
 
     return result;
   }

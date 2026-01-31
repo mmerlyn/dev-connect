@@ -13,7 +13,7 @@ export class ChatController {
       const conversations = await ChatService.getConversations(req.user.id);
       return ResponseUtils.success(res, conversations);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -30,7 +30,7 @@ export class ChatController {
       const result = await ChatService.getMessages(req.user.id, req.params.userId, page, limit);
       return ResponseUtils.paginated(res, result.messages, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -43,7 +43,7 @@ export class ChatController {
       const message = await ChatService.sendMessage(req.user.id, req.body.recipientId, req.body.content);
       return ResponseUtils.created(res, message, 'Message sent successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -56,7 +56,7 @@ export class ChatController {
       await ChatService.markAsRead(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Message marked as read');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -69,7 +69,7 @@ export class ChatController {
       await ChatService.deleteMessage(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Message deleted successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

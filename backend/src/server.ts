@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config/index.js';
 import { ErrorMiddleware } from './shared/middleware/error.middleware.js';
-import { connectRedis } from './shared/database/redis.js';
+import { connectRedis, disconnectRedis } from './shared/database/redis.js';
 import { prisma } from './shared/database/client.js';
 import passport from './config/passport.js';
 import { generalLimiter } from './shared/middleware/rateLimit.middleware.js';
@@ -66,7 +66,7 @@ app.use(passport.initialize());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -97,27 +97,29 @@ app.use(ErrorMiddleware.handle);
 // Start server
 const startServer = async () => {
   try {
-    // Connect to Redis
-    await connectRedis();
+    // Connect to Redis (optional - app works without it)
+    const redisConnected = await connectRedis();
 
-    // Setup Redis adapter for Socket.io horizontal scaling
-    try {
-      await setupRedisAdapter(io);
-      await RedisPresence.initialize();
-    } catch (err) {
-      console.warn('Redis adapter setup failed (non-fatal):', err);
+    // Setup Redis adapter for Socket.io horizontal scaling (only if Redis available)
+    if (redisConnected) {
+      try {
+        await setupRedisAdapter(io);
+        await RedisPresence.initialize();
+        console.log('Socket.IO Redis adapter enabled');
+      } catch (err) {
+        console.warn('Redis adapter setup failed (non-fatal):', (err as Error).message);
+      }
+    } else {
+      console.log('⚠️  Socket.IO running without Redis adapter (single-instance mode)');
     }
 
     // Test database connection
     await prisma.$connect();
-    console.log('Database connected');
+    console.log('✅ Database connected');
 
-    // Initialize recommendation training queue
-    try {
-      initializeRecommendationQueue();
-      console.log('Recommendation training queue initialized');
-    } catch (err) {
-      console.warn('Recommendation queue setup failed (non-fatal):', err);
+    // Initialize recommendation training queue (only if Redis available)
+    if (redisConnected && initializeRecommendationQueue()) {
+      console.log('✅ Recommendation training queue initialized');
     }
 
     // Start HTTP server
@@ -136,6 +138,7 @@ const startServer = async () => {
 process.on('SIGINT', async () => {
   console.log('\nShutting down gracefully...');
   await SocketService.shutdown();
+  await disconnectRedis();
   await prisma.$disconnect();
   process.exit(0);
 });

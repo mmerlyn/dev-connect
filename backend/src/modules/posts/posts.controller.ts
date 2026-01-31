@@ -14,7 +14,7 @@ export class PostsController {
       const result = await PostsService.getAllPosts(page, limit, req.user?.id);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -24,7 +24,7 @@ export class PostsController {
       const post = await PostsService.getPost(req.params.id, req.user?.id);
       return ResponseUtils.success(res, post);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -37,7 +37,7 @@ export class PostsController {
       const post = await PostsService.createPost(req.user.id, req.body);
       return ResponseUtils.created(res, post, 'Post created successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -50,7 +50,7 @@ export class PostsController {
       const post = await PostsService.updatePost(req.params.id, req.user.id, req.body);
       return ResponseUtils.success(res, post, 'Post updated successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -63,7 +63,7 @@ export class PostsController {
       await PostsService.deletePost(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Post deleted successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -76,7 +76,7 @@ export class PostsController {
       await PostsService.likePost(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Post liked successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -89,7 +89,7 @@ export class PostsController {
       await PostsService.unlikePost(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Post unliked successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -102,7 +102,7 @@ export class PostsController {
       const result = await PostsService.getPostLikes(req.params.id, page, limit);
       return ResponseUtils.paginated(res, result.likes, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -115,7 +115,7 @@ export class PostsController {
       const result = await CommentsService.getPostComments(req.params.id, page, limit);
       return ResponseUtils.paginated(res, result.comments, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -128,7 +128,7 @@ export class PostsController {
       const comment = await CommentsService.addComment(req.params.id, req.user.id, req.body.content);
       return ResponseUtils.created(res, comment, 'Comment added successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -141,7 +141,7 @@ export class PostsController {
       const comment = await CommentsService.updateComment(req.params.id, req.user.id, req.body.content);
       return ResponseUtils.success(res, comment, 'Comment updated successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -154,7 +154,7 @@ export class PostsController {
       await CommentsService.deleteComment(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Comment deleted successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -167,7 +167,7 @@ export class PostsController {
       const reply = await CommentsService.replyToComment(req.params.id, req.user.id, req.body.content);
       return ResponseUtils.created(res, reply, 'Reply added successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -180,7 +180,7 @@ export class PostsController {
       await CommentsService.likeComment(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Comment liked successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -193,7 +193,7 @@ export class PostsController {
       await CommentsService.unlikeComment(req.params.id, req.user.id);
       return ResponseUtils.success(res, null, 'Comment unliked successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -206,7 +206,7 @@ export class PostsController {
       const result = await CommentsService.getCommentReplies(req.params.id, page, limit);
       return ResponseUtils.paginated(res, result.replies, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

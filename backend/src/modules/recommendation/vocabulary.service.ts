@@ -1,5 +1,5 @@
 import { prisma } from '../../shared/database/client.js';
-import { redisClient } from '../../shared/database/redis.js';
+import { redisCache } from '../../shared/database/redis.js';
 import { HASHTAG_VOCAB_SIZE, SKILL_VOCAB_SIZE, VOCAB_CACHE_TTL } from './recommendation.types.js';
 
 const HASHTAG_VOCAB_KEY = 'rec:vocab:hashtags';
@@ -11,16 +11,12 @@ export class VocabularyService {
 
   // Build top-N hashtag vocabulary from posts
   static async buildHashtagVocab(): Promise<Map<string, number>> {
-    // Try cache first
-    try {
-      const cached = await redisClient.get(HASHTAG_VOCAB_KEY);
-      if (cached) {
-        const entries: [string, number][] = JSON.parse(cached);
-        VocabularyService.hashtagVocab = new Map(entries);
-        return VocabularyService.hashtagVocab;
-      }
-    } catch {
-      // Cache miss or error, rebuild
+    // Try cache first (returns null if Redis unavailable)
+    const cached = await redisCache.get(HASHTAG_VOCAB_KEY);
+    if (cached) {
+      const entries: [string, number][] = JSON.parse(cached);
+      VocabularyService.hashtagVocab = new Map(entries);
+      return VocabularyService.hashtagVocab;
     }
 
     // Get hashtag frequency counts from posts
@@ -46,16 +42,8 @@ export class VocabularyService {
       vocab.set(tag, index);
     });
 
-    // Cache for 24h
-    try {
-      await redisClient.setEx(
-        HASHTAG_VOCAB_KEY,
-        VOCAB_CACHE_TTL,
-        JSON.stringify([...vocab.entries()])
-      );
-    } catch {
-      // Non-fatal
-    }
+    // Cache for 24h (no-op if Redis unavailable)
+    await redisCache.set(HASHTAG_VOCAB_KEY, JSON.stringify([...vocab.entries()]), VOCAB_CACHE_TTL);
 
     VocabularyService.hashtagVocab = vocab;
     return vocab;
@@ -63,16 +51,12 @@ export class VocabularyService {
 
   // Build top-N skill vocabulary from user profiles
   static async buildSkillVocab(): Promise<Map<string, number>> {
-    // Try cache first
-    try {
-      const cached = await redisClient.get(SKILL_VOCAB_KEY);
-      if (cached) {
-        const entries: [string, number][] = JSON.parse(cached);
-        VocabularyService.skillVocab = new Map(entries);
-        return VocabularyService.skillVocab;
-      }
-    } catch {
-      // Cache miss or error, rebuild
+    // Try cache first (returns null if Redis unavailable)
+    const cached = await redisCache.get(SKILL_VOCAB_KEY);
+    if (cached) {
+      const entries: [string, number][] = JSON.parse(cached);
+      VocabularyService.skillVocab = new Map(entries);
+      return VocabularyService.skillVocab;
     }
 
     // Get skill frequency counts from users
@@ -98,16 +82,8 @@ export class VocabularyService {
       vocab.set(skill, index);
     });
 
-    // Cache for 24h
-    try {
-      await redisClient.setEx(
-        SKILL_VOCAB_KEY,
-        VOCAB_CACHE_TTL,
-        JSON.stringify([...vocab.entries()])
-      );
-    } catch {
-      // Non-fatal
-    }
+    // Cache for 24h (no-op if Redis unavailable)
+    await redisCache.set(SKILL_VOCAB_KEY, JSON.stringify([...vocab.entries()]), VOCAB_CACHE_TTL);
 
     VocabularyService.skillVocab = vocab;
     return vocab;
@@ -118,13 +94,9 @@ export class VocabularyService {
     hashtagVocab: Map<string, number>;
     skillVocab: Map<string, number>;
   }> {
-    // Invalidate caches
-    try {
-      await redisClient.del(HASHTAG_VOCAB_KEY);
-      await redisClient.del(SKILL_VOCAB_KEY);
-    } catch {
-      // Non-fatal
-    }
+    // Invalidate caches (no-op if Redis unavailable)
+    await redisCache.del(HASHTAG_VOCAB_KEY);
+    await redisCache.del(SKILL_VOCAB_KEY);
 
     const [hashtagVocab, skillVocab] = await Promise.all([
       VocabularyService.buildHashtagVocab(),

@@ -18,7 +18,7 @@ export class AuthController {
       const result = await AuthService.register(data);
       return ResponseUtils.created(res, result, 'User registered successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -29,7 +29,7 @@ export class AuthController {
       const result = await AuthService.login(data);
       return ResponseUtils.success(res, result, 'Login successful');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -40,7 +40,7 @@ export class AuthController {
       const result = await AuthService.refreshToken(data.refreshToken);
       return ResponseUtils.success(res, result, 'Token refreshed successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -53,14 +53,13 @@ export class AuthController {
       const user = await AuthService.getCurrentUser(req.user.id);
       return ResponseUtils.success(res, user);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
   // POST /api/auth/logout
-  static async logout(req: AuthRequest, res: Response) {
+  static async logout(_req: AuthRequest, res: Response) {
     // In a stateless JWT system, logout is handled client-side
-    // Here we can add token to blacklist in Redis if needed
     return ResponseUtils.success(res, null, 'Logged out successfully');
   }
 
@@ -74,7 +73,7 @@ export class AuthController {
       await AuthService.changePassword(req.user.id, data.currentPassword, data.newPassword);
       return ResponseUtils.success(res, null, 'Password changed successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -98,7 +97,7 @@ export class AuthController {
       const user = await AuthService.linkOAuthAccount(req.user.id, provider, providerId);
       return ResponseUtils.success(res, user, `${provider} account linked successfully`);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -117,7 +116,7 @@ export class AuthController {
       const user = await AuthService.unlinkOAuthAccount(req.user.id, provider);
       return ResponseUtils.success(res, user, `${provider} account unlinked successfully`);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -130,7 +129,7 @@ export class AuthController {
       const result = await TwoFactorService.generateSecret(req.user.id);
       return ResponseUtils.success(res, result, 'Scan the QR code with your authenticator app');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -147,7 +146,7 @@ export class AuthController {
       const result = await TwoFactorService.enable(req.user.id, token);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -164,7 +163,7 @@ export class AuthController {
       const result = await TwoFactorService.disable(req.user.id, token);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -183,7 +182,7 @@ export class AuthController {
       const result = await AuthService.complete2FALogin(userId);
       return ResponseUtils.success(res, result, 'Login successful');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -196,7 +195,7 @@ export class AuthController {
       const enabled = await TwoFactorService.is2FAEnabled(req.user.id);
       return ResponseUtils.success(res, { enabled });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -209,7 +208,7 @@ export class AuthController {
       const result = await AuthService.sendVerificationEmail(req.user.id);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -223,7 +222,7 @@ export class AuthController {
       const result = await AuthService.verifyEmail(token);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -237,7 +236,7 @@ export class AuthController {
       const result = await AuthService.requestPasswordReset(email);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -254,7 +253,7 @@ export class AuthController {
       const result = await AuthService.resetPassword(token, password);
       return ResponseUtils.success(res, result);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

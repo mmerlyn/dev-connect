@@ -18,7 +18,7 @@ export class FeedController {
       const result = await FeedService.getPersonalizedFeed(req.user.id, page, limit);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -31,7 +31,7 @@ export class FeedController {
       const result = await FeedService.getTrendingPosts(page, limit, req.user?.id);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -48,7 +48,7 @@ export class FeedController {
       const result = await FeedService.getFollowingFeed(req.user.id, page, limit);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -65,7 +65,7 @@ export class FeedController {
       const result = await RecommendationService.getRecommendedFeed(req.user.id, page, limit);
       return ResponseUtils.paginated(res, result.posts, result.page, result.limit, result.total);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -79,7 +79,7 @@ export class FeedController {
       const status = await RecommendationService.getStatus(req.user.id);
       return ResponseUtils.success(res, status);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

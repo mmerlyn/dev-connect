@@ -2,9 +2,7 @@ import { prisma } from '../../shared/database/client.js';
 
 export class SearchService {
   // Universal search
-  static async universalSearch(query: string, page: number = 1, limit: number = 20) {
-    const skip = (page - 1) * limit;
-
+  static async universalSearch(query: string, _page: number = 1, _limit: number = 20) {
     const [users, posts, hashtags] = await Promise.all([
       // Search users
       prisma.user.findMany({

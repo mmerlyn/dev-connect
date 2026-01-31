@@ -3,10 +3,9 @@ import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 
 export class ErrorMiddleware {
-  static handle(error: Error, req: Request, res: Response, next: NextFunction) {
+  static handle(error: Error, _req: Request, res: Response, _next: NextFunction) {
     console.error('Error:', error);
 
-    // Zod validation errors
     if (error instanceof ZodError) {
       return res.status(400).json({
         success: false,
@@ -18,9 +17,7 @@ export class ErrorMiddleware {
       });
     }
 
-    // Prisma errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Unique constraint violation
       if (error.code === 'P2002') {
         return res.status(409).json({
           success: false,
@@ -29,7 +26,6 @@ export class ErrorMiddleware {
         });
       }
 
-      // Record not found
       if (error.code === 'P2025') {
         return res.status(404).json({
           success: false,
@@ -38,16 +34,12 @@ export class ErrorMiddleware {
       }
     }
 
-    // Default error
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'production'
-        ? 'Internal server error'
-        : error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
     });
   }
 
-  // 404 handler
   static notFound(req: Request, res: Response) {
     res.status(404).json({
       success: false,

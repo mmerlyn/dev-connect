@@ -8,7 +8,7 @@ export const VerifyEmail = () => {
   const token = searchParams.get('token');
 
   const [isLoading, setIsLoading] = useState(true);
-  const [success, setSuccess] = useState(false);
+  const [_success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { prisma } from '../../shared/database/client.js';
-import { redisClient } from '../../shared/database/redis.js';
+import { redisCache } from '../../shared/database/redis.js';
 import { VocabularyService } from './vocabulary.service.js';
 import {
   HASHTAG_VOCAB_SIZE,
@@ -24,14 +24,10 @@ export class FeatureService {
   // Build user interest vector (196-dim)
   // [hashtag_tfidf(128) | skill_profile(64) | engagement_features(4)]
   static async buildUserVector(userId: string): Promise<UserFeatureVector> {
-    // Check cache
-    try {
-      const cached = await redisClient.get(`${USER_FEATURE_PREFIX}${userId}`);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch {
-      // Cache miss
+    // Check cache (returns null if Redis unavailable)
+    const cached = await redisCache.get(`${USER_FEATURE_PREFIX}${userId}`);
+    if (cached) {
+      return JSON.parse(cached);
     }
 
     const hashtagVocab = VocabularyService.getHashtagVocab() || await VocabularyService.buildHashtagVocab();
@@ -120,16 +116,8 @@ export class FeatureService {
 
     const result: UserFeatureVector = { userId, vector };
 
-    // Cache
-    try {
-      await redisClient.setEx(
-        `${USER_FEATURE_PREFIX}${userId}`,
-        FEATURE_TTL,
-        JSON.stringify(result)
-      );
-    } catch {
-      // Non-fatal
-    }
+    // Cache (no-op if Redis unavailable)
+    await redisCache.set(`${USER_FEATURE_PREFIX}${userId}`, JSON.stringify(result), FEATURE_TTL);
 
     return result;
   }
@@ -137,14 +125,10 @@ export class FeatureService {
   // Build post feature vector (197-dim)
   // [hashtag_presence(128) | author_skills(64) | engagement_meta(5)]
   static async buildPostVector(postId: string): Promise<PostFeatureVector> {
-    // Check cache
-    try {
-      const cached = await redisClient.get(`${POST_FEATURE_PREFIX}${postId}`);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch {
-      // Cache miss
+    // Check cache (returns null if Redis unavailable)
+    const cached = await redisCache.get(`${POST_FEATURE_PREFIX}${postId}`);
+    if (cached) {
+      return JSON.parse(cached);
     }
 
     const hashtagVocab = VocabularyService.getHashtagVocab() || await VocabularyService.buildHashtagVocab();
@@ -200,16 +184,8 @@ export class FeatureService {
 
     const result: PostFeatureVector = { postId, vector };
 
-    // Cache
-    try {
-      await redisClient.setEx(
-        `${POST_FEATURE_PREFIX}${postId}`,
-        FEATURE_TTL,
-        JSON.stringify(result)
-      );
-    } catch {
-      // Non-fatal
-    }
+    // Cache (no-op if Redis unavailable)
+    await redisCache.set(`${POST_FEATURE_PREFIX}${postId}`, JSON.stringify(result), FEATURE_TTL);
 
     return result;
   }
@@ -221,19 +197,11 @@ export class FeatureService {
 
   // Invalidate cached features for a user
   static async invalidateUser(userId: string) {
-    try {
-      await redisClient.del(`${USER_FEATURE_PREFIX}${userId}`);
-    } catch {
-      // Non-fatal
-    }
+    await redisCache.del(`${USER_FEATURE_PREFIX}${userId}`);
   }
 
   // Invalidate cached features for a post
   static async invalidatePost(postId: string) {
-    try {
-      await redisClient.del(`${POST_FEATURE_PREFIX}${postId}`);
-    } catch {
-      // Non-fatal
-    }
+    await redisCache.del(`${POST_FEATURE_PREFIX}${postId}`);
   }
 }

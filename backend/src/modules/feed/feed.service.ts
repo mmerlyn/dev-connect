@@ -1,19 +1,15 @@
 import { prisma } from '../../shared/database/client.js';
-import { redisClient } from '../../shared/database/redis.js';
+import { redisCache } from '../../shared/database/redis.js';
 
 export class FeedService {
   // Get personalized feed
   static async getPersonalizedFeed(userId: string, page: number = 1, limit: number = 20) {
     const cacheKey = `feed:user:${userId}:page:${page}`;
 
-    // Try to get from cache
-    try {
-      const cachedFeed = await redisClient.get(cacheKey);
-      if (cachedFeed) {
-        return JSON.parse(cachedFeed);
-      }
-    } catch (error) {
-      console.error('Redis error:', error);
+    // Try to get from cache (returns null if Redis unavailable)
+    const cachedFeed = await redisCache.get(cacheKey);
+    if (cachedFeed) {
+      return JSON.parse(cachedFeed);
     }
 
     const skip = (page - 1) * limit;
@@ -77,12 +73,8 @@ export class FeedService {
 
     const result = { posts: postsWithLikeStatus, total, page, limit };
 
-    // Cache for 5 minutes
-    try {
-      await redisClient.setEx(cacheKey, 300, JSON.stringify(result));
-    } catch (error) {
-      console.error('Redis cache error:', error);
-    }
+    // Cache for 5 minutes (no-op if Redis unavailable)
+    await redisCache.set(cacheKey, JSON.stringify(result), 300);
 
     return result;
   }
