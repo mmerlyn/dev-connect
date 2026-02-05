@@ -1,0 +1,33 @@
+# Render Blueprint for DevConnect Backend
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: devconnect-backend
+    runtime: node
+    region: oregon # or singapore, frankfurt, ohio
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        sync: false # Set manually in dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false # Set manually in dashboard
+      - key: REDIS_HOST
+        sync: false # Optional - set if using Upstash
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false

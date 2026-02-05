@@ -38,45 +38,29 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
 
-    // Create socket connection
     const newSocket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', {
       auth: { token },
       transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected');
       setIsConnected(true);
-
-      // Authenticate with server
       newSocket.emit('authenticate', { token });
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
       setIsConnected(false);
     });
 
-    newSocket.on('authenticated', (data) => {
-      console.log('Socket authenticated:', data);
-    });
-
-    // Real-time notification handler
-    newSocket.on('notification', (notification) => {
-      console.log('New notification:', notification);
-      // Invalidate notifications cache to refetch
+    newSocket.on('notification', () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     });
 
-    // Real-time message handler
-    newSocket.on('message', (message) => {
-      console.log('New message:', message);
-      // Invalidate messages cache to refetch
+    newSocket.on('message', () => {
       queryClient.invalidateQueries({ queryKey: ['messages'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     });
 
-    // Handle new post in feed
     newSocket.on('new-post', () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });

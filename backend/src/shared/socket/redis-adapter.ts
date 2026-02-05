@@ -9,6 +9,7 @@ export async function setupRedisAdapter(io: Server): Promise<void> {
     socket: {
       host: config.redis.host,
       port: config.redis.port,
+      ...(config.redis.tls ? { tls: true } : {}),
     },
     password: config.redis.password,
   });
@@ -33,9 +34,8 @@ export async function setupRedisAdapter(io: Server): Promise<void> {
   console.log('Redis adapter connected for Socket.io horizontal scaling');
 }
 
-// Redis-backed presence tracking
 const PRESENCE_PREFIX = 'presence:';
-const PRESENCE_TTL = 300; // 5 minutes
+const PRESENCE_TTL = 300;
 
 export class RedisPresence {
   private static redisClient: ReturnType<typeof createClient> | null = null;
@@ -45,6 +45,7 @@ export class RedisPresence {
       socket: {
         host: config.redis.host,
         port: config.redis.port,
+        ...(config.redis.tls ? { tls: true } : {}),
       },
       password: config.redis.password,
     });

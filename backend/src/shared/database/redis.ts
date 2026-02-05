@@ -4,13 +4,10 @@ import { config } from '../../config/index.js';
 let redisClient: RedisClientType | null = null;
 let isRedisAvailable = false;
 
-// Check if Redis is available
 export const isRedisConnected = () => isRedisAvailable;
 
-// Get Redis client (may be null if not connected)
 export const getRedisClient = () => redisClient;
 
-// Safe Redis operations that gracefully handle unavailability
 export const redisCache = {
   async get(key: string): Promise<string | null> {
     if (!isRedisAvailable || !redisClient) return null;
@@ -49,11 +46,9 @@ export const redisCache = {
   },
 };
 
-// Connect to Redis (optional - app works without it)
 export const connectRedis = async (): Promise<boolean> => {
-  // Skip if Redis host is not configured
   if (!config.redis.host) {
-    console.log('⚠️  Redis not configured - caching disabled');
+    console.log('Redis not configured - caching disabled');
     return false;
   }
 
@@ -63,6 +58,7 @@ export const connectRedis = async (): Promise<boolean> => {
         host: config.redis.host,
         port: config.redis.port,
         connectTimeout: 5000,
+        ...(config.redis.tls ? { tls: true } : {}),
       },
       password: config.redis.password || undefined,
     });
@@ -73,7 +69,7 @@ export const connectRedis = async (): Promise<boolean> => {
     });
 
     redisClient.on('connect', () => {
-      console.log('✅ Redis connected');
+      console.log('Redis connected');
       isRedisAvailable = true;
     });
 
@@ -86,14 +82,13 @@ export const connectRedis = async (): Promise<boolean> => {
     isRedisAvailable = true;
     return true;
   } catch (error) {
-    console.warn('⚠️  Redis unavailable - caching disabled:', (error as Error).message);
+    console.warn('Redis unavailable - caching disabled:', (error as Error).message);
     isRedisAvailable = false;
     redisClient = null;
     return false;
   }
 };
 
-// Disconnect Redis gracefully
 export const disconnectRedis = async () => {
   if (redisClient && isRedisAvailable) {
     try {

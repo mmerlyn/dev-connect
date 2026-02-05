@@ -6,9 +6,8 @@ import { isRedisConnected } from '../../shared/database/redis.js';
 let trainingQueue: Bull.Queue | null = null;
 
 export function initializeRecommendationQueue(): boolean {
-  // Skip if Redis is not available
   if (!isRedisConnected() || !config.redis.host) {
-    console.log('⚠️  Recommendation queue disabled - Redis not available');
+    console.log('Recommendation queue disabled - Redis not available');
     return false;
   }
 
@@ -18,10 +17,10 @@ export function initializeRecommendationQueue(): boolean {
         host: config.redis.host,
         port: config.redis.port,
         password: config.redis.password || undefined,
+        ...(config.redis.tls ? { tls: {} } : {}),
       },
     });
 
-    // Process training jobs
     trainingQueue.process(async () => {
       console.log('Starting scheduled recommendation model retraining...');
       const result = await TrainingService.runTrainingPipeline();
@@ -29,11 +28,10 @@ export function initializeRecommendationQueue(): boolean {
       return result;
     });
 
-    // Schedule retraining every 6 hours
     trainingQueue.add(
       {},
       {
-        repeat: { cron: '0 */6 * * *' }, // Every 6 hours
+        repeat: { cron: '0 */6 * * *' },
         removeOnComplete: 10,
         removeOnFail: 5,
       }
@@ -49,7 +47,7 @@ export function initializeRecommendationQueue(): boolean {
 
     return true;
   } catch (error) {
-    console.warn('⚠️  Failed to initialize recommendation queue:', (error as Error).message);
+    console.warn('Failed to initialize recommendation queue:', (error as Error).message);
     return false;
   }
 }

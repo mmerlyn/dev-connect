@@ -19,7 +19,6 @@ import { initializeRecommendationQueue } from './modules/recommendation/recommen
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Module routers
 import authRouter from './modules/auth/auth.routes.js';
 import usersRouter from './modules/users/users.routes.js';
 import postsRouter from './modules/posts/posts.routes.js';
@@ -31,11 +30,9 @@ import uploadsRouter from './modules/uploads/uploads.routes.js';
 import metricsRouter from './modules/metrics/metrics.routes.js';
 import { SocketService } from './shared/socket/socket.service.js';
 
-// Initialize Express app
 const app = express();
 const httpServer = createServer(app);
 
-// Initialize Socket.IO with production config
 const io = new Server(httpServer, {
   cors: {
     origin: config.frontendUrl,
@@ -51,7 +48,6 @@ const io = new Server(httpServer, {
   perMessageDeflate: SOCKET_CONFIG.perMessageDeflate,
 });
 
-// Middleware
 app.use(helmet());
 app.use(cors({
   origin: config.frontendUrl,
@@ -62,18 +58,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
-// Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Apply general rate limiting to all API routes
 app.use('/api', generalLimiter);
 
-// API Routes
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/posts', postsRouter);
@@ -84,23 +76,17 @@ app.use('/api/search', searchRouter);
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/metrics', metricsRouter);
 
-// Initialize Socket.IO service
 SocketService.initialize(io);
 
-// Export io for use in other modules
 export { io };
 
-// Error handlers (must be last)
 app.use(ErrorMiddleware.notFound);
 app.use(ErrorMiddleware.handle);
 
-// Start server
 const startServer = async () => {
   try {
-    // Connect to Redis (optional - app works without it)
     const redisConnected = await connectRedis();
 
-    // Setup Redis adapter for Socket.io horizontal scaling (only if Redis available)
     if (redisConnected) {
       try {
         await setupRedisAdapter(io);
@@ -110,19 +96,16 @@ const startServer = async () => {
         console.warn('Redis adapter setup failed (non-fatal):', (err as Error).message);
       }
     } else {
-      console.log('⚠️  Socket.IO running without Redis adapter (single-instance mode)');
+      console.log('Socket.IO running without Redis adapter (single-instance mode)');
     }
 
-    // Test database connection
     await prisma.$connect();
-    console.log('✅ Database connected');
+    console.log('Database connected');
 
-    // Initialize recommendation training queue (only if Redis available)
     if (redisConnected && initializeRecommendationQueue()) {
-      console.log('✅ Recommendation training queue initialized');
+      console.log('Recommendation training queue initialized');
     }
 
-    // Start HTTP server
     httpServer.listen(config.port, () => {
       console.log(`Server running on port ${config.port}`);
       console.log(`Environment: ${config.env}`);
@@ -134,7 +117,6 @@ const startServer = async () => {
   }
 };
 
-// Handle shutdown
 process.on('SIGINT', async () => {
   console.log('\nShutting down gracefully...');
   await SocketService.shutdown();
@@ -143,5 +125,4 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Start the server
 startServer();

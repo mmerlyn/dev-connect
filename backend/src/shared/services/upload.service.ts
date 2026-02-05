@@ -8,7 +8,6 @@ import { config } from '../../config/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize S3 client if credentials are provided
 const s3Client = config.aws.accessKeyId && config.aws.secretAccessKey
   ? new S3Client({
       region: config.aws.region,
@@ -31,7 +30,6 @@ interface UploadResult {
 }
 
 export class UploadService {
-  // Process and resize avatar image
   static async processAvatar(file: Express.Multer.File): Promise<ProcessedImage> {
     const buffer = await sharp(file.path)
       .resize(200, 200, {
@@ -42,14 +40,11 @@ export class UploadService {
       .toBuffer();
 
     const filename = `avatar-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
-
-    // Delete temp file
     await fs.unlink(file.path).catch(() => {});
 
     return { buffer, filename };
   }
 
-  // Process and resize banner image
   static async processBanner(file: Express.Multer.File): Promise<ProcessedImage> {
     const buffer = await sharp(file.path)
       .resize(1200, 400, {
@@ -60,14 +55,11 @@ export class UploadService {
       .toBuffer();
 
     const filename = `banner-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
-
-    // Delete temp file
     await fs.unlink(file.path).catch(() => {});
 
     return { buffer, filename };
   }
 
-  // Process post image - maintain aspect ratio, limit dimensions
   static async processPostImage(file: Express.Multer.File): Promise<ProcessedImage> {
     const buffer = await sharp(file.path)
       .resize(1200, 1200, {
@@ -78,14 +70,11 @@ export class UploadService {
       .toBuffer();
 
     const filename = `post-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
-
-    // Delete temp file
     await fs.unlink(file.path).catch(() => {});
 
     return { buffer, filename };
   }
 
-  // Upload to S3
   static async uploadToS3(buffer: Buffer, filename: string, folder: string): Promise<string> {
     if (!s3Client || !config.aws.s3Bucket) {
       throw new Error('S3 not configured');
@@ -105,11 +94,8 @@ export class UploadService {
     return `https://${config.aws.s3Bucket}.s3.${config.aws.region}.amazonaws.com/${key}`;
   }
 
-  // Upload to local filesystem
   static async uploadToLocal(buffer: Buffer, filename: string, folder: string): Promise<string> {
     const uploadDir = path.join(__dirname, '../../../uploads', folder);
-
-    // Ensure directory exists
     await fs.mkdir(uploadDir, { recursive: true });
 
     const filePath = path.join(uploadDir, filename);
@@ -118,14 +104,12 @@ export class UploadService {
     return `/uploads/${folder}/${filename}`;
   }
 
-  // Delete from S3
   static async deleteFromS3(url: string): Promise<void> {
     if (!s3Client || !config.aws.s3Bucket) return;
 
     try {
-      // Extract key from URL
       const urlObj = new URL(url);
-      const key = urlObj.pathname.slice(1); // Remove leading /
+      const key = urlObj.pathname.slice(1);
 
       await s3Client.send(
         new DeleteObjectCommand({
@@ -138,7 +122,6 @@ export class UploadService {
     }
   }
 
-  // Delete from local filesystem
   static async deleteFromLocal(url: string): Promise<void> {
     if (!url.startsWith('/uploads/')) return;
 
@@ -150,7 +133,6 @@ export class UploadService {
     }
   }
 
-  // Delete file (auto-detects storage type)
   static async deleteFile(url: string): Promise<void> {
     if (!url) return;
 
@@ -161,7 +143,6 @@ export class UploadService {
     }
   }
 
-  // Upload avatar
   static async uploadAvatar(file: Express.Multer.File): Promise<UploadResult> {
     const { buffer, filename } = await this.processAvatar(file);
 
@@ -172,7 +153,6 @@ export class UploadService {
     return { url };
   }
 
-  // Upload banner
   static async uploadBanner(file: Express.Multer.File): Promise<UploadResult> {
     const { buffer, filename } = await this.processBanner(file);
 
@@ -183,7 +163,6 @@ export class UploadService {
     return { url };
   }
 
-  // Upload post image
   static async uploadPostImage(file: Express.Multer.File): Promise<UploadResult> {
     const { buffer, filename } = await this.processPostImage(file);
 
@@ -194,7 +173,6 @@ export class UploadService {
     return { url };
   }
 
-  // Upload multiple post images
   static async uploadPostImages(files: Express.Multer.File[]): Promise<UploadResult[]> {
     const results = await Promise.all(
       files.map((file) => this.uploadPostImage(file))
