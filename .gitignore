@@ -207,6 +207,11 @@ backend/models/**/weights*.bin
 backend/models/**/*.h5
 
 # ===========================
+# Interview Guide
+# ===========================
+guide/
+
+# ===========================
 # Project-Specific
 # ===========================
 # Design files
