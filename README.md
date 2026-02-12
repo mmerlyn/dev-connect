@@ -2,7 +2,7 @@
 
 A full-stack social platform built for developers to share code, discuss ideas, and discover content tailored to their interests. Think of it as a developer-focused social network where posts can include syntax-highlighted code snippets, and the feed learns what you care about over time.
 
-I wanted to go beyond CRUD. Most portfolio projects stop at "user can create, read, update, delete". I wanted to tackle the harder problems: real-time communication over WebSockets, ML-driven content recommendations, OAuth flows, multi-layer caching, and getting everything deployed to production infrastructure. Every feature here was built from scratch, not scaffolded from a tutorial.
+I wanted to go beyond CRUD. Most portfolio projects stop at "user can create, read, update, delete". I wanted to tackle the harder problems: real-time communication over WebSockets, ML-driven content recommendations, OAuth flows, multi-layer caching, and getting everything deployed to production infrastructure.
 
 **Highlights**: TensorFlow.js recommendation engine · Socket.IO real-time chat · JWT refresh rotation + GitHub/Google OAuth + TOTP 2FA · 7-tier rate limiting · 9 modular feature modules · 19 unit tests + CI/CD pipeline · k6 load tested (1,000 VUs, p95 < 7ms)
 
@@ -56,7 +56,7 @@ I wanted to go beyond CRUD. Most portfolio projects stop at "user can create, re
                                 └───────────────┘
 ```
 
-The backend is a modular monolith — 9 feature modules that are self-contained (own controller, service, routes, validation) but share one Express process and one PostgreSQL database. Redis and S3 are optional; the app degrades gracefully without them.
+The backend is a modular monolith. 9 feature modules that are self-contained (own controller, service, routes, validation) but share one Express process and one PostgreSQL database. Redis and S3 are optional; the app degrades gracefully without them.
 
 ### System Design Patterns
 
