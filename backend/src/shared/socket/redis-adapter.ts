@@ -3,6 +3,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import type { Server } from 'socket.io';
 import { config } from '../../config/index.js';
 import { SOCKET_CONFIG } from './socket.config.js';
+import { logger } from '../utils/logger.js';
 
 export async function setupRedisAdapter(io: Server): Promise<void> {
   const pubClient = createClient({
@@ -17,10 +18,10 @@ export async function setupRedisAdapter(io: Server): Promise<void> {
   const subClient = pubClient.duplicate();
 
   pubClient.on('error', (err) =>
-    console.error('Redis Adapter Pub Error:', err)
+    logger.error(err, 'Redis Adapter Pub Error')
   );
   subClient.on('error', (err) =>
-    console.error('Redis Adapter Sub Error:', err)
+    logger.error(err, 'Redis Adapter Sub Error')
   );
 
   await Promise.all([pubClient.connect(), subClient.connect()]);
@@ -31,7 +32,7 @@ export async function setupRedisAdapter(io: Server): Promise<void> {
     })
   );
 
-  console.log('Redis adapter connected for Socket.io horizontal scaling');
+  logger.info('Redis adapter connected for Socket.io horizontal scaling');
 }
 
 const PRESENCE_PREFIX = 'presence:';
@@ -51,7 +52,7 @@ export class RedisPresence {
     });
 
     RedisPresence.redisClient.on('error', (err) =>
-      console.error('Redis Presence Error:', err)
+      logger.error(err, 'Redis Presence Error')
     );
 
     await RedisPresence.redisClient.connect();

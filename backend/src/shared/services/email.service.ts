@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { config } from '../../config/index.js';
+import { logger } from '../utils/logger.js';
 
 // Create transporter - using SendGrid or SMTP
 const createTransporter = () => {
@@ -19,12 +20,7 @@ const createTransporter = () => {
   if (config.env === 'development') {
     return {
       sendMail: async (options: any) => {
-        console.log('==========================================');
-        console.log('DEV EMAIL (not sent):');
-        console.log('To:', options.to);
-        console.log('Subject:', options.subject);
-        console.log('HTML:', options.html);
-        console.log('==========================================');
+        logger.info({ to: options.to, subject: options.subject, html: options.html }, 'Dev email (not sent)');
         return { messageId: 'dev-' + Date.now() };
       },
     };

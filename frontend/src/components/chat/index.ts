@@ -1,4 +1,4 @@
-// Chat components will be added here
-// export { ConversationList } from './ConversationList';
-// export { MessageBubble } from './MessageBubble';
-// export { MessageInput } from './MessageInput';
+export { ConversationItem } from './ConversationItem';
+export { MessageBubble } from './MessageBubble';
+export { ChatHeader } from './ChatHeader';
+export { MessageInput } from './MessageInput';

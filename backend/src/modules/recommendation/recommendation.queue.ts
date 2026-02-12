@@ -2,12 +2,13 @@ import Bull from 'bull';
 import { config } from '../../config/index.js';
 import { TrainingService } from './training.service.js';
 import { isRedisConnected } from '../../shared/database/redis.js';
+import { logger } from '../../shared/utils/logger.js';
 
 let trainingQueue: Bull.Queue | null = null;
 
 export function initializeRecommendationQueue(): boolean {
   if (!isRedisConnected() || !config.redis.host) {
-    console.log('Recommendation queue disabled - Redis not available');
+    logger.info('Recommendation queue disabled - Redis not available');
     return false;
   }
 
@@ -22,9 +23,9 @@ export function initializeRecommendationQueue(): boolean {
     });
 
     trainingQueue.process(async () => {
-      console.log('Starting scheduled recommendation model retraining...');
+      logger.info('Starting scheduled recommendation model retraining...');
       const result = await TrainingService.runTrainingPipeline();
-      console.log('Retraining result:', result);
+      logger.info({ result }, 'Retraining result');
       return result;
     });
 
@@ -38,16 +39,16 @@ export function initializeRecommendationQueue(): boolean {
     );
 
     trainingQueue.on('completed', (job, result) => {
-      console.log(`Training job ${job.id} completed:`, result);
+      logger.info({ jobId: job.id, result }, 'Training job completed');
     });
 
     trainingQueue.on('failed', (job, err) => {
-      console.error(`Training job ${job.id} failed:`, err);
+      logger.error({ jobId: job.id, err }, 'Training job failed');
     });
 
     return true;
   } catch (error) {
-    console.warn('Failed to initialize recommendation queue:', (error as Error).message);
+    logger.warn({ err: (error as Error).message }, 'Failed to initialize recommendation queue');
     return false;
   }
 }

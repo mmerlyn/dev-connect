@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { PostsController } from './posts.controller.js';
 import { AuthMiddleware } from '../../shared/middleware/auth.middleware.js';
+import { createPostLimiter } from '../../shared/middleware/rateLimit.middleware.js';
 
 const router = Router();
 
 // Post routes
 router.get('/', AuthMiddleware.optionalAuthenticate, PostsController.getAllPosts);
 router.get('/:id', AuthMiddleware.optionalAuthenticate, PostsController.getPost);
-router.post('/', AuthMiddleware.authenticate, PostsController.createPost);
+router.post('/', AuthMiddleware.authenticate, createPostLimiter, PostsController.createPost);
 router.patch('/:id', AuthMiddleware.authenticate, PostsController.updatePost);
 router.delete('/:id', AuthMiddleware.authenticate, PostsController.deletePost);
 

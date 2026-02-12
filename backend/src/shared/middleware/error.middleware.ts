@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
+import { logger } from '../utils/logger.js';
 
 export class ErrorMiddleware {
   static handle(error: Error, _req: Request, res: Response, _next: NextFunction) {
-    console.error('Error:', error);
+    logger.error(error, 'Error occurred');
 
     if (error instanceof ZodError) {
       return res.status(400).json({

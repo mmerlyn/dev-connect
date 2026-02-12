@@ -3,6 +3,7 @@ import { AuthRequest } from '../types/index.js';
 import { AuthUtils } from '../utils/auth.utils.js';
 import { ResponseUtils } from '../utils/response.utils.js';
 import { prisma } from '../database/client.js';
+import { logger } from '../utils/logger.js';
 
 export class AuthMiddleware {
   static async authenticate(req: AuthRequest, res: Response, next: NextFunction) {
@@ -29,7 +30,7 @@ export class AuthMiddleware {
       req.user = user;
       return next();
     } catch (error) {
-      console.error('Authentication error:', error);
+      logger.error(error, 'Authentication error');
       return ResponseUtils.unauthorized(res, 'Authentication failed');
     }
   }

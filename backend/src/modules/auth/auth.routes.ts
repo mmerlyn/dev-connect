@@ -4,7 +4,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthMiddleware } from '../../shared/middleware/auth.middleware.js';
 import { AuthService } from './auth.service.js';
 import { config } from '../../config/index.js';
-import { authLimiter } from '../../shared/middleware/rateLimit.middleware.js';
+import { authLimiter, passwordResetLimiter } from '../../shared/middleware/rateLimit.middleware.js';
 
 const router = Router();
 
@@ -82,7 +82,7 @@ router.post('/send-verification-email', AuthMiddleware.authenticate, AuthControl
 router.post('/verify-email', authLimiter, AuthController.verifyEmail); // Public - used from email link
 
 // Password reset routes
-router.post('/forgot-password', authLimiter, AuthController.forgotPassword); // Public
-router.post('/reset-password', authLimiter, AuthController.resetPassword); // Public
+router.post('/forgot-password', passwordResetLimiter, AuthController.forgotPassword); // Public
+router.post('/reset-password', passwordResetLimiter, AuthController.resetPassword); // Public
 
 export default router;

@@ -7,6 +7,7 @@ import {
   instrumentSocket,
 } from './socket.middleware.js';
 import { RedisPresence } from './redis-adapter.js';
+import { logger } from '../utils/logger.js';
 
 // Map of userId to socket ids (a user can have multiple connections)
 const userSockets = new Map<string, Set<string>>();
@@ -41,7 +42,7 @@ export class SocketService {
 
         // Update Redis presence
         RedisPresence.setOnline(userId, socket.id).catch((err) =>
-          console.error('Redis presence error:', err)
+          logger.error(err, 'Redis presence error')
         );
       }
 
@@ -66,7 +67,7 @@ export class SocketService {
         if (userId) {
           decrementConnectionCount(userId);
           RedisPresence.setOffline(userId, socket.id).catch((err) =>
-            console.error('Redis presence cleanup error:', err)
+            logger.error(err, 'Redis presence cleanup error')
           );
         }
       });

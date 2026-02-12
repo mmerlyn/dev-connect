@@ -1,5 +1,6 @@
 import { createClient, RedisClientType } from 'redis';
 import { config } from '../../config/index.js';
+import { logger } from '../utils/logger.js';
 
 let redisClient: RedisClientType | null = null;
 let isRedisAvailable = false;
@@ -14,7 +15,7 @@ export const redisCache = {
     try {
       return await redisClient.get(key);
     } catch (error) {
-      console.error('Redis get error:', error);
+      logger.error(error, 'Redis get error');
       return null;
     }
   },
@@ -29,7 +30,7 @@ export const redisCache = {
       }
       return true;
     } catch (error) {
-      console.error('Redis set error:', error);
+      logger.error(error, 'Redis set error');
       return false;
     }
   },
@@ -40,7 +41,7 @@ export const redisCache = {
       await redisClient.del(key);
       return true;
     } catch (error) {
-      console.error('Redis del error:', error);
+      logger.error(error, 'Redis del error');
       return false;
     }
   },
@@ -48,7 +49,7 @@ export const redisCache = {
 
 export const connectRedis = async (): Promise<boolean> => {
   if (!config.redis.host) {
-    console.log('Redis not configured - caching disabled');
+    logger.info('Redis not configured - caching disabled');
     return false;
   }
 
@@ -64,17 +65,17 @@ export const connectRedis = async (): Promise<boolean> => {
     });
 
     redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err.message);
+      logger.error({ err: err.message }, 'Redis Client Error');
       isRedisAvailable = false;
     });
 
     redisClient.on('connect', () => {
-      console.log('Redis connected');
+      logger.info('Redis connected');
       isRedisAvailable = true;
     });
 
     redisClient.on('end', () => {
-      console.log('Redis connection closed');
+      logger.info('Redis connection closed');
       isRedisAvailable = false;
     });
 
@@ -82,7 +83,7 @@ export const connectRedis = async (): Promise<boolean> => {
     isRedisAvailable = true;
     return true;
   } catch (error) {
-    console.warn('Redis unavailable - caching disabled:', (error as Error).message);
+    logger.warn({ err: (error as Error).message }, 'Redis unavailable - caching disabled');
     isRedisAvailable = false;
     redisClient = null;
     return false;
@@ -94,7 +95,7 @@ export const disconnectRedis = async () => {
     try {
       await redisClient.quit();
     } catch (error) {
-      console.error('Error disconnecting Redis:', error);
+      logger.error(error, 'Error disconnecting Redis');
     }
   }
   isRedisAvailable = false;

@@ -3,6 +3,7 @@ import { VocabularyService } from './vocabulary.service.js';
 import { FeatureService } from './feature.service.js';
 import { ModelService } from './model.service.js';
 import { TRAINING_CONFIG, type TrainingExample } from './recommendation.types.js';
+import { logger } from '../../shared/utils/logger.js';
 
 export class TrainingService {
   // Generate training examples: positive (liked) and negative samples (1:3 ratio)
@@ -78,36 +79,32 @@ export class TrainingService {
     exampleCount: number;
     metrics?: { loss: number; accuracy: number };
   }> {
-    console.log('Starting recommendation training pipeline...');
+    logger.info('Starting recommendation training pipeline...');
 
     try {
       // Step 1: Rebuild vocabularies
-      console.log('Step 1/3: Rebuilding vocabularies...');
+      logger.info('Step 1/3: Rebuilding vocabularies...');
       await VocabularyService.rebuildAll();
 
       // Step 2: Generate training data
-      console.log('Step 2/3: Generating training data...');
+      logger.info('Step 2/3: Generating training data...');
       const examples = await TrainingService.generateTrainingData();
 
       if (examples.length < 10) {
-        console.log(
-          `Insufficient training data (${examples.length} examples). Need at least 10.`
-        );
+        logger.info({ exampleCount: examples.length }, 'Insufficient training data. Need at least 10.');
         return { success: false, exampleCount: examples.length };
       }
 
-      console.log(`Generated ${examples.length} training examples`);
+      logger.info({ exampleCount: examples.length }, 'Generated training examples');
 
       // Step 3: Train model
-      console.log('Step 3/3: Training model...');
+      logger.info('Step 3/3: Training model...');
       const history = await ModelService.train(examples);
 
       const finalLoss = history.history.loss?.slice(-1)[0] as number;
       const finalAccuracy = history.history.acc?.slice(-1)[0] as number;
 
-      console.log(
-        `Training complete. Loss: ${finalLoss?.toFixed(4)}, Accuracy: ${finalAccuracy?.toFixed(4)}`
-      );
+      logger.info({ loss: finalLoss?.toFixed(4), accuracy: finalAccuracy?.toFixed(4) }, 'Training complete');
 
       return {
         success: true,
@@ -118,7 +115,7 @@ export class TrainingService {
         },
       };
     } catch (error) {
-      console.error('Training pipeline failed:', error);
+      logger.error(error, 'Training pipeline failed');
       return { success: false, exampleCount: 0 };
     }
   }

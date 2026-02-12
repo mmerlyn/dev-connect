@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UsersController } from './users.controller.js';
 import { AuthMiddleware } from '../../shared/middleware/auth.middleware.js';
 import { uploadAvatar, uploadBanner } from '../../shared/middleware/upload.middleware.js';
+import { followLimiter } from '../../shared/middleware/rateLimit.middleware.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/:id/following', UsersController.getFollowing);
 router.get('/:id/likes', AuthMiddleware.optionalAuthenticate, UsersController.getUserLikedPosts);
 
 // Protected routes with dynamic params
-router.post('/:id/follow', AuthMiddleware.authenticate, UsersController.followUser);
-router.delete('/:id/follow', AuthMiddleware.authenticate, UsersController.unfollowUser);
+router.post('/:id/follow', AuthMiddleware.authenticate, followLimiter, UsersController.followUser);
+router.delete('/:id/follow', AuthMiddleware.authenticate, followLimiter, UsersController.unfollowUser);
 
 export default router;

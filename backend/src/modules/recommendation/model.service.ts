@@ -8,6 +8,7 @@ import {
   TRAINING_CONFIG,
   type TrainingExample,
 } from './recommendation.types.js';
+import { logger } from '../../shared/utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -142,7 +143,7 @@ export class ModelService {
     }
 
     await ModelService.model.save(`file://${modelDir}`);
-    console.log('Recommendation model saved to disk');
+    logger.info('Recommendation model saved to disk');
   }
 
   // Load model from disk
@@ -155,10 +156,10 @@ export class ModelService {
 
     try {
       ModelService.model = await tf.loadLayersModel(`file://${modelPath}`);
-      console.log('Recommendation model loaded from disk');
+      logger.info('Recommendation model loaded from disk');
       return true;
     } catch (err) {
-      console.error('Failed to load recommendation model:', err);
+      logger.error(err, 'Failed to load recommendation model');
       return false;
     }
   }
