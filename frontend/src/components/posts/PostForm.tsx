@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useCreatePost } from '../../hooks/usePosts';
+import { getErrorMessage } from '../../utils/errors';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -49,12 +50,10 @@ export const PostForm = () => {
     const remainingSlots = 4 - images.length;
     const filesToAdd = files.slice(0, remainingSlots);
 
-    // Validate file types
     const validFiles = filesToAdd.filter((file) =>
       ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)
     );
 
-    // Create previews
     const newPreviews = validFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
@@ -62,7 +61,6 @@ export const PostForm = () => {
 
     setImages((prev) => [...prev, ...newPreviews]);
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -110,7 +108,6 @@ export const PostForm = () => {
     try {
       setIsUploading(true);
 
-      // Upload images first if any
       let imageUrls: string[] = [];
       if (images.length > 0) {
         imageUrls = await uploadImages();
@@ -123,14 +120,13 @@ export const PostForm = () => {
         images: imageUrls.length > 0 ? imageUrls : undefined,
       });
 
-      // Cleanup
       images.forEach((img) => URL.revokeObjectURL(img.preview));
       setContent('');
       setCodeSnippet('');
       setShowCodeEditor(false);
       setImages([]);
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to create post. Please try again.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to create post. Please try again.'));
     } finally {
       setIsUploading(false);
     }

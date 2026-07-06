@@ -3,7 +3,6 @@ import QRCode from 'qrcode';
 import { prisma } from '../../shared/database/client.js';
 
 export class TwoFactorService {
-  // Generate 2FA secret and QR code for setup
   static async generateSecret(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -18,7 +17,6 @@ export class TwoFactorService {
       throw new Error('2FA is already enabled');
     }
 
-    // Generate secret
     const secret = speakeasy.generateSecret({
       name: `DevConnect:${user.email}`,
       issuer: 'DevConnect',
@@ -31,7 +29,6 @@ export class TwoFactorService {
       data: { twoFactorSecret: secret.base32 },
     });
 
-    // Generate QR code
     const qrCodeDataUrl = await QRCode.toDataURL(secret.otpauth_url!);
 
     return {
@@ -40,7 +37,6 @@ export class TwoFactorService {
     };
   }
 
-  // Verify token and enable 2FA
   static async enable(userId: string, token: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -59,7 +55,6 @@ export class TwoFactorService {
       throw new Error('2FA is already enabled');
     }
 
-    // Verify the token
     const verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret,
       encoding: 'base32',
@@ -71,7 +66,6 @@ export class TwoFactorService {
       throw new Error('Invalid verification code');
     }
 
-    // Enable 2FA
     await prisma.user.update({
       where: { id: userId },
       data: { twoFactorEnabled: true },
@@ -81,7 +75,6 @@ export class TwoFactorService {
     return { success: true, message: '2FA has been enabled successfully' };
   }
 
-  // Verify 2FA token during login
   static async verify(userId: string, token: string): Promise<boolean> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -100,7 +93,6 @@ export class TwoFactorService {
     });
   }
 
-  // Disable 2FA
   static async disable(userId: string, token: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -115,7 +107,6 @@ export class TwoFactorService {
       throw new Error('2FA is not enabled');
     }
 
-    // Verify the token before disabling
     const verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret!,
       encoding: 'base32',
@@ -127,7 +118,6 @@ export class TwoFactorService {
       throw new Error('Invalid verification code');
     }
 
-    // Disable 2FA
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -139,7 +129,6 @@ export class TwoFactorService {
     return { success: true, message: '2FA has been disabled successfully' };
   }
 
-  // Check if user has 2FA enabled
   static async is2FAEnabled(userId: string): Promise<boolean> {
     const user = await prisma.user.findUnique({
       where: { id: userId },

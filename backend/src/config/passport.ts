@@ -27,13 +27,11 @@ if (config.oauth.github.clientId && config.oauth.github.clientSecret) {
           const displayName = profile.displayName || profile.username;
           const avatar = profile.photos?.[0]?.value;
 
-          // Check if user exists with this GitHub ID
           let user = await prisma.user.findUnique({
             where: { githubId },
           });
 
           if (user) {
-            // User exists, update last active
             user = await prisma.user.update({
               where: { id: user.id },
               data: { lastActive: new Date() },
@@ -41,13 +39,11 @@ if (config.oauth.github.clientId && config.oauth.github.clientSecret) {
             return done(null, user);
           }
 
-          // Check if user exists with same email
           const existingEmailUser = await prisma.user.findUnique({
             where: { email },
           });
 
           if (existingEmailUser) {
-            // Link GitHub account to existing user
             user = await prisma.user.update({
               where: { id: existingEmailUser.id },
               data: {
@@ -67,7 +63,6 @@ if (config.oauth.github.clientId && config.oauth.github.clientSecret) {
             counter++;
           }
 
-          // Create new user
           user = await prisma.user.create({
             data: {
               email,
@@ -114,13 +109,11 @@ if (config.oauth.google.clientId && config.oauth.google.clientSecret) {
             return done(new Error('No email provided by Google'));
           }
 
-          // Check if user exists with this Google ID
           let user = await prisma.user.findUnique({
             where: { googleId },
           });
 
           if (user) {
-            // User exists, update last active
             user = await prisma.user.update({
               where: { id: user.id },
               data: { lastActive: new Date() },
@@ -128,13 +121,11 @@ if (config.oauth.google.clientId && config.oauth.google.clientSecret) {
             return done(null, user);
           }
 
-          // Check if user exists with same email
           const existingEmailUser = await prisma.user.findUnique({
             where: { email },
           });
 
           if (existingEmailUser) {
-            // Link Google account to existing user
             user = await prisma.user.update({
               where: { id: existingEmailUser.id },
               data: {
@@ -153,7 +144,6 @@ if (config.oauth.google.clientId && config.oauth.google.clientSecret) {
             counter++;
           }
 
-          // Create new user
           user = await prisma.user.create({
             data: {
               email,
@@ -173,12 +163,10 @@ if (config.oauth.google.clientId && config.oauth.google.clientSecret) {
   );
 }
 
-// Serialize user for session
 passport.serializeUser((user: any, done) => {
   done(null, user.id);
 });
 
-// Deserialize user from session
 passport.deserializeUser(async (id: string, done) => {
   try {
     const user = await prisma.user.findUnique({ where: { id } });

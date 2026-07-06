@@ -58,13 +58,6 @@ export const config = {
   session: {
     secret: process.env.SESSION_SECRET || 'dev-session-secret',
   },
-
-  recommendation: {
-    retrainCron: process.env.RECOMMENDATION_RETRAIN_CRON || '0 */6 * * *',
-    minTrainingExamples: parseInt(process.env.RECOMMENDATION_MIN_EXAMPLES || '10', 10),
-    candidatePoolSize: parseInt(process.env.RECOMMENDATION_POOL_SIZE || '200', 10),
-    explorationRate: parseFloat(process.env.RECOMMENDATION_EXPLORATION_RATE || '0.1'),
-  },
 };
 
 export default config;

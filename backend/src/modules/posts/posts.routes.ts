@@ -30,7 +30,6 @@ commentsRouter.post('/:id/like', AuthMiddleware.authenticate, PostsController.li
 commentsRouter.delete('/:id/like', AuthMiddleware.authenticate, PostsController.unlikeComment);
 commentsRouter.get('/:id/replies', PostsController.getCommentReplies);
 
-// Mount comments router
 router.use('/comments', commentsRouter);
 
 export default router;

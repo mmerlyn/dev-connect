@@ -8,6 +8,7 @@ import {
 } from './socket.middleware.js';
 import { RedisPresence } from './redis-adapter.js';
 import { logger } from '../utils/logger.js';
+import { catchUpForUser } from '../../modules/chat/chat.streams.consumer.js';
 
 // Map of userId to socket ids (a user can have multiple connections)
 const userSockets = new Map<string, Set<string>>();
@@ -18,32 +19,29 @@ export class SocketService {
   static initialize(socketServer: Server) {
     io = socketServer;
 
-    // Apply authentication middleware
     io.use(socketAuthMiddleware);
     io.use(connectionLimitMiddleware);
 
-    // Start metrics collection
     socketMetrics.start();
 
     io.on('connection', (socket: Socket) => {
       const userId = (socket as any).userId as string;
 
-      // Instrument socket events for latency tracking
       instrumentSocket(socket);
-
-      // Record connection in metrics
       socketMetrics.recordConnection();
 
-      // Register user in local map and Redis presence
       if (userId) {
         SocketService.registerUser(userId, socket.id);
         socket.join(`user:${userId}`);
         socket.emit('authenticated', { success: true, socketId: socket.id });
 
-        // Update Redis presence
         RedisPresence.setOnline(userId, socket.id).catch((err) =>
           logger.error(err, 'Redis presence error')
         );
+
+        // One-shot: deliver whatever this user missed while disconnected.
+        // Not a standing loop — see chat.streams.consumer.ts.
+        catchUpForUser(userId).catch((err) => logger.error(err, 'Chat catch-up error'));
       }
 
       socket.on('join-room', (roomId: string) => {
@@ -57,6 +55,24 @@ export class SocketService {
       socket.on('ping-latency', (callback: (ts: number) => void) => {
         if (typeof callback === 'function') {
           callback(Date.now());
+        }
+      });
+
+      // Client sends this every ~15s (half the presence TTL) to keep the
+      // Redis presence key alive. Missing a few in a row (crash, dropped
+      // network) lets it expire on its own — no explicit offline event needed.
+      socket.on('heartbeat', () => {
+        if (userId) {
+          RedisPresence.refresh(userId, socket.id).catch((err) =>
+            logger.error(err, 'Redis presence heartbeat error')
+          );
+        }
+      });
+
+      // Ephemeral, no persistence: losing one is fine, latency is what matters.
+      socket.on('typing', ({ recipientId }: { recipientId: string }) => {
+        if (userId && recipientId) {
+          SocketService.emitToUser(recipientId, 'typing', { userId });
         }
       });
 
@@ -93,11 +109,10 @@ export class SocketService {
     }
   }
 
-  static isUserOnline(userId: string): boolean {
-    return userSockets.has(userId) && userSockets.get(userId)!.size > 0;
-  }
-
-  static async isUserOnlineRedis(userId: string): Promise<boolean> {
+  // Redis-backed, so it answers correctly regardless of which gateway
+  // replica a user's socket(s) are connected to — the in-memory
+  // userSockets map above only reflects this one process.
+  static async isUserOnline(userId: string): Promise<boolean> {
     return RedisPresence.isOnline(userId);
   }
 
@@ -105,14 +120,12 @@ export class SocketService {
     return userSockets.size;
   }
 
-  // Emit to a specific user
   static emitToUser(userId: string, event: string, data: any) {
     if (io) {
       io.to(`user:${userId}`).emit(event, data);
     }
   }
 
-  // Emit to multiple users
   static emitToUsers(userIds: string[], event: string, data: any) {
     if (io) {
       userIds.forEach((userId) => {
@@ -121,39 +134,32 @@ export class SocketService {
     }
   }
 
-  // Emit to all connected clients
   static emitToAll(event: string, data: any) {
     if (io) {
       io.emit(event, data);
     }
   }
 
-  // Emit notification
   static sendNotification(userId: string, notification: any) {
     SocketService.emitToUser(userId, 'notification', notification);
   }
 
-  // Emit new message
   static sendMessage(userId: string, message: any) {
     SocketService.emitToUser(userId, 'message', message);
   }
 
-  // Emit new post (to followers)
   static notifyNewPost(followerIds: string[], postId: string) {
     SocketService.emitToUsers(followerIds, 'new-post', { postId });
   }
 
-  // Graceful shutdown
   static async shutdown() {
     socketMetrics.stop();
 
     if (io) {
-      // Notify all clients of shutdown
       io.emit('server-shutdown', {
         message: 'Server is shutting down for maintenance',
       });
 
-      // Close all connections
       io.close();
       io = null;
     }

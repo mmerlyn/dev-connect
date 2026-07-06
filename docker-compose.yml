@@ -32,6 +32,102 @@ services:
       timeout: 5s
       retries: 5
 
+  # Backend gateway replicas. Identical image/env, differing only in
+  # GATEWAY_ID (tags their logs) — see nginx/nginx.conf for how traffic is
+  # spread across all three, and REDIS_V2_DESIGN.md for why this exists at
+  # all: a message bus between servers only proves anything with more than
+  # one server behind it.
+  gateway1:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devconnect-gateway1
+    env_file:
+      - ./backend/.env
+    environment:
+      # backend/.env sets PORT=4000 for local `npm run dev`; the container
+      # image (Dockerfile EXPOSE/HEALTHCHECK) and nginx's upstream both
+      # assume 8080, so this must be pinned here to override the env file.
+      PORT: 8080
+      GATEWAY_ID: gateway1
+      DATABASE_URL: postgresql://${POSTGRES_USER:-devconnect}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-devconnect}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Overridable for k6 runs: the general API rate limiter is per-IP, and
+      # a load-testing client hits from a single IP, which isn't what that
+      # limiter is meant to defend against. Defaults to the real app value.
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  gateway2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devconnect-gateway2
+    env_file:
+      - ./backend/.env
+    environment:
+      # backend/.env sets PORT=4000 for local `npm run dev`; the container
+      # image (Dockerfile EXPOSE/HEALTHCHECK) and nginx's upstream both
+      # assume 8080, so this must be pinned here to override the env file.
+      PORT: 8080
+      GATEWAY_ID: gateway2
+      DATABASE_URL: postgresql://${POSTGRES_USER:-devconnect}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-devconnect}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Overridable for k6 runs: the general API rate limiter is per-IP, and
+      # a load-testing client hits from a single IP, which isn't what that
+      # limiter is meant to defend against. Defaults to the real app value.
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  gateway3:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devconnect-gateway3
+    env_file:
+      - ./backend/.env
+    environment:
+      # backend/.env sets PORT=4000 for local `npm run dev`; the container
+      # image (Dockerfile EXPOSE/HEALTHCHECK) and nginx's upstream both
+      # assume 8080, so this must be pinned here to override the env file.
+      PORT: 8080
+      GATEWAY_ID: gateway3
+      DATABASE_URL: postgresql://${POSTGRES_USER:-devconnect}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-devconnect}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Overridable for k6 runs: the general API rate limiter is per-IP, and
+      # a load-testing client hits from a single IP, which isn't what that
+      # limiter is meant to defend against. Defaults to the real app value.
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Single entrypoint load-balancing across the 3 gateways above.
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: devconnect-nginx
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - gateway1
+      - gateway2
+      - gateway3
+
 volumes:
   postgres_data:
   redis_data:

@@ -24,7 +24,6 @@ router.get(
       const user = req.user as any;
       const result = await AuthService.handleOAuthCallback(user);
 
-      // Redirect to frontend with tokens
       const params = new URLSearchParams({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
@@ -48,7 +47,6 @@ router.get(
       const user = req.user as any;
       const result = await AuthService.handleOAuthCallback(user);
 
-      // Redirect to frontend with tokens
       const params = new URLSearchParams({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,

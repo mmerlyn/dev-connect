@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { User } from '../../types';
 import { useUpdateProfile, useUpdateAvatar, useUpdateBanner } from '../../hooks/useUsers';
 import { useAuthStore } from '../../store/authStore';
+import { getErrorMessage } from '../../utils/errors';
 
 interface EditProfileModalProps {
   user: User;
@@ -35,6 +36,8 @@ export const EditProfileModal = ({ user, isOpen, onClose }: EditProfileModalProp
 
   useEffect(() => {
     if (isOpen) {
+      // Re-seed the form from the latest user data each time the modal opens.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         displayName: user.displayName || '',
         bio: user.bio || '',
@@ -99,12 +102,10 @@ export const EditProfileModal = ({ user, isOpen, onClose }: EditProfileModalProp
     }
 
     try {
-      // Upload avatar if selected
       if (selectedAvatarFile) {
         await updateAvatar.mutateAsync(selectedAvatarFile);
       }
 
-      // Upload banner if selected
       if (selectedBannerFile) {
         await updateBanner.mutateAsync(selectedBannerFile);
       }
@@ -126,8 +127,8 @@ export const EditProfileModal = ({ user, isOpen, onClose }: EditProfileModalProp
 
       await getCurrentUser();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update profile');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to update profile'));
     }
   };
 

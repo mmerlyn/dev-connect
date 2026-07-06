@@ -90,6 +90,62 @@ export const connectRedis = async (): Promise<boolean> => {
   }
 };
 
+const scriptShaCache = new Map<string, string>();
+
+export const redisScript = {
+  // Loads a Lua script once and caches its SHA so subsequent calls can use
+  // the cheaper EVALSHA instead of resending the full script body.
+  async loadScript(name: string, luaSource: string): Promise<string | null> {
+    if (!isRedisAvailable || !redisClient) return null;
+
+    const cached = scriptShaCache.get(name);
+    if (cached) return cached;
+
+    try {
+      const sha = await redisClient.scriptLoad(luaSource);
+      scriptShaCache.set(name, sha);
+      return sha;
+    } catch (error) {
+      logger.error(error, 'Redis scriptLoad error');
+      return null;
+    }
+  },
+
+  // Runs a named Lua script via EVALSHA, falling back to EVAL (and
+  // re-caching the SHA) if Redis evicted the script from its cache.
+  async runScript(
+    name: string,
+    luaSource: string,
+    keys: string[],
+    args: Array<string | number>
+  ): Promise<unknown> {
+    if (!isRedisAvailable || !redisClient) return null;
+
+    const argv = args.map(String);
+
+    try {
+      const sha = await redisScript.loadScript(name, luaSource);
+      if (sha) {
+        return await redisClient.evalSha(sha, { keys, arguments: argv });
+      }
+      return await redisClient.eval(luaSource, { keys, arguments: argv });
+    } catch (error) {
+      const message = (error as Error).message || '';
+      if (message.includes('NOSCRIPT')) {
+        scriptShaCache.delete(name);
+        try {
+          return await redisClient!.eval(luaSource, { keys, arguments: argv });
+        } catch (fallbackError) {
+          logger.error(fallbackError, 'Redis eval fallback error');
+          return null;
+        }
+      }
+      logger.error(error, 'Redis evalSha error');
+      return null;
+    }
+  },
+};
+
 export const disconnectRedis = async () => {
   if (redisClient && isRedisAvailable) {
     try {

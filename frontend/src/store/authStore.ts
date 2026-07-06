@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import apiClient from '../api/client';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '../types';
+import { getErrorMessage } from '../utils/errors';
 
 interface LoginResponse {
   user?: User;
@@ -46,7 +47,6 @@ export const useAuthStore = create<AuthState>()(
           const response = await apiClient.post<{ data: LoginResponse }>('/auth/login', credentials);
           const data = response.data.data;
 
-          // Check if 2FA is required
           if (data.requires2FA && data.userId) {
             set({
               pending2FAUserId: data.userId,
@@ -71,9 +71,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           return data;
-        } catch (error: any) {
+        } catch (error) {
           set({
-            error: error.response?.data?.message || 'Login failed',
+            error: getErrorMessage(error, 'Login failed'),
             isLoading: false,
           });
           throw error;
@@ -97,9 +97,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             pending2FAUserId: null,
           });
-        } catch (error: any) {
+        } catch (error) {
           set({
-            error: error.response?.data?.message || '2FA verification failed',
+            error: getErrorMessage(error, '2FA verification failed'),
             isLoading: false,
           });
           throw error;
@@ -122,9 +122,9 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
-        } catch (error: any) {
+        } catch (error) {
           set({
-            error: error.response?.data?.message || 'Registration failed',
+            error: getErrorMessage(error, 'Registration failed'),
             isLoading: false,
           });
           throw error;
@@ -152,7 +152,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
-        } catch (error) {
+        } catch {
           set({ isLoading: false });
           get().logout();
         }

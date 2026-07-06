@@ -212,10 +212,18 @@ backend/models/**/*.h5
 guide/
 
 # ===========================
+# Personal Documents (contains PII - name, phone, address)
+# ===========================
+*.pdf
+
+# ===========================
 # Project-Specific
 # ===========================
 # Design files
 DevConnect Design/
+
+# Personal notes/scratch docs
+notes/
 
 # Backup files
 *.backup

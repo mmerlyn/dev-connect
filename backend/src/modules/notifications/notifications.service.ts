@@ -1,7 +1,6 @@
 import { prisma } from '../../shared/database/client.js';
 
 export class NotificationsService {
-  // Get user notifications
   static async getUserNotifications(userId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -36,7 +35,6 @@ export class NotificationsService {
     return { notifications, total, unreadCount, page, limit };
   }
 
-  // Mark notification as read
   static async markAsRead(notificationId: string, userId: string) {
     const notification = await prisma.notification.findUnique({
       where: { id: notificationId },
@@ -58,7 +56,6 @@ export class NotificationsService {
     return true;
   }
 
-  // Mark all notifications as read
   static async markAllAsRead(userId: string) {
     await prisma.notification.updateMany({
       where: {
@@ -71,7 +68,6 @@ export class NotificationsService {
     return true;
   }
 
-  // Delete notification
   static async deleteNotification(notificationId: string, userId: string) {
     const notification = await prisma.notification.findUnique({
       where: { id: notificationId },
@@ -92,7 +88,6 @@ export class NotificationsService {
     return true;
   }
 
-  // Get unread count
   static async getUnreadCount(userId: string) {
     const count = await prisma.notification.count({
       where: {

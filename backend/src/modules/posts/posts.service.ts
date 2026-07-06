@@ -2,9 +2,7 @@ import { prisma } from '../../shared/database/client.js';
 import { SocketService } from '../../shared/socket/socket.service.js';
 
 export class PostsService {
-  // Create post
   static async createPost(userId: string, data: any) {
-    // Extract hashtags from content
     const hashtags = this.extractHashtags(data.content);
 
     const post = await prisma.post.create({
@@ -34,7 +32,6 @@ export class PostsService {
       },
     });
 
-    // Update hashtag counts
     if (hashtags.length > 0) {
       await this.updateHashtagCounts(hashtags);
     }
@@ -42,7 +39,6 @@ export class PostsService {
     return post;
   }
 
-  // Get all posts with pagination
   static async getAllPosts(page: number = 1, limit: number = 20, userId?: string) {
     const skip = (page - 1) * limit;
 
@@ -71,7 +67,6 @@ export class PostsService {
       prisma.post.count(),
     ]);
 
-    // Check if user has liked each post
     if (userId) {
       const postsWithLikeStatus = await Promise.all(
         posts.map(async (post) => {
@@ -92,7 +87,6 @@ export class PostsService {
     return { posts, total, page, limit };
   }
 
-  // Get single post
   static async getPost(postId: string, userId?: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -119,13 +113,11 @@ export class PostsService {
       throw new Error('Post not found');
     }
 
-    // Increment views
     await prisma.post.update({
       where: { id: postId },
       data: { views: { increment: 1 } },
     });
 
-    // Check if user has liked the post
     if (userId) {
       const isLiked = await prisma.like.findUnique({
         where: {
@@ -141,9 +133,7 @@ export class PostsService {
     return post;
   }
 
-  // Update post
   static async updatePost(postId: string, userId: string, data: any) {
-    // Check if post exists and user is the author
     const existingPost = await prisma.post.findUnique({
       where: { id: postId },
     });
@@ -188,7 +178,6 @@ export class PostsService {
     return post;
   }
 
-  // Delete post
   static async deletePost(postId: string, userId: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -209,7 +198,6 @@ export class PostsService {
     return true;
   }
 
-  // Like post
   static async likePost(postId: string, userId: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -219,7 +207,6 @@ export class PostsService {
       throw new Error('Post not found');
     }
 
-    // Check if already liked
     const existingLike = await prisma.like.findUnique({
       where: {
         userId_postId: {
@@ -240,7 +227,6 @@ export class PostsService {
       },
     });
 
-    // Create notification if not own post
     if (post.authorId !== userId) {
       const notification = await prisma.notification.create({
         data: {
@@ -261,14 +247,12 @@ export class PostsService {
           },
         },
       });
-      // Emit real-time notification
       SocketService.sendNotification(post.authorId, notification);
     }
 
     return like;
   }
 
-  // Unlike post
   static async unlikePost(postId: string, userId: string) {
     const like = await prisma.like.findUnique({
       where: {
@@ -295,7 +279,6 @@ export class PostsService {
     return true;
   }
 
-  // Get post likes
   static async getPostLikes(postId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -327,7 +310,6 @@ export class PostsService {
     };
   }
 
-  // Extract hashtags from content
   private static extractHashtags(content: string): string[] {
     const hashtagRegex = /#(\w+)/g;
     const matches = content.match(hashtagRegex);
@@ -335,7 +317,6 @@ export class PostsService {
     return [...new Set(matches.map((tag) => tag.toLowerCase()))];
   }
 
-  // Update hashtag counts
   private static async updateHashtagCounts(hashtags: string[]) {
     for (const tag of hashtags) {
       const name = tag.replace('#', '');
@@ -347,7 +328,6 @@ export class PostsService {
     }
   }
 
-  // Get posts liked by a user
   static async getUserLikedPosts(userId: string, requestingUserId?: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -389,12 +369,10 @@ export class PostsService {
       }),
     ]);
 
-    // Filter out null posts and extract post data
     const posts = likes
       .filter((like) => like.post !== null)
       .map((like) => like.post!);
 
-    // Check if requesting user has liked each post
     if (requestingUserId) {
       const postsWithLikeStatus = await Promise.all(
         posts.map(async (post) => {

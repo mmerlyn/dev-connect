@@ -4,7 +4,6 @@ import { logger } from '../utils/logger.js';
 
 // Create transporter - using SendGrid or SMTP
 const createTransporter = () => {
-  // Check if SendGrid API key is provided
   if (config.email.sendgridApiKey) {
     return nodemailer.createTransport({
       host: 'smtp.sendgrid.net',
@@ -16,7 +15,6 @@ const createTransporter = () => {
     });
   }
 
-  // Fallback to console logging in development
   if (config.env === 'development') {
     return {
       sendMail: async (options: any) => {

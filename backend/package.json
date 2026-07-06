@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "mkdir -p dist/shared/redis/scripts && cp src/shared/redis/scripts/*.lua dist/shared/redis/scripts/",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -19,6 +20,8 @@
     "test:load:concurrent": "./tests/load/run-load-tests.sh concurrent",
     "test:load:throughput": "./tests/load/run-load-tests.sh throughput",
     "test:load:quick": "./tests/load/run-load-tests.sh quick",
+    "test:load:ws": "./tests/load/run-load-tests.sh ws",
+    "test:load:failover": "./tests/load/run-load-tests.sh failover",
     "lint": "eslint src/"
   },
   "keywords": [
@@ -33,9 +36,7 @@
     "@aws-sdk/lib-storage": "^3.943.0",
     "@prisma/client": "^5.22.0",
     "@socket.io/redis-adapter": "^8.3.0",
-    "@tensorflow/tfjs-node": "^4.22.0",
     "bcryptjs": "^2.4.3",
-    "bull": "^4.16.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

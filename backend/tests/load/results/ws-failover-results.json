@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-07-03T00:26:01.123Z",
+  "testName": "Gateway Failover (docker kill mid-run)",
+  "config": {
+    "numUsers": 60,
+    "targetConcurrentConnections": 300,
+    "totalDuration": "45s"
+  },
+  "connections": {
+    "peakVUs": 305,
+    "wsConnectErrors": 200
+  },
+  "messages": {
+    "received": 1740,
+    "sendFailed": 0
+  },
+  "deliveryLatencyMs": {
+    "avg": "41.83",
+    "p95": "29.00",
+    "max": "8248.00"
+  }
+}

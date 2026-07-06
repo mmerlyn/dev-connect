@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { twoFactorApi } from '../../api/twoFactor';
+import { getErrorMessage } from '../../utils/errors';
 
 export const TwoFactorSection = () => {
   const [enabled, setEnabled] = useState(false);
@@ -28,8 +29,8 @@ export const TwoFactorSection = () => {
     try {
       const data = await twoFactorApi.generateSecret();
       setSetup(data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to generate 2FA secret');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to generate 2FA secret'));
     } finally {
       setLoading(false);
     }
@@ -46,8 +47,8 @@ export const TwoFactorSection = () => {
       setSetup(null);
       setCode('');
       setSuccess('Two-factor authentication has been enabled successfully!');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to enable 2FA');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to enable 2FA'));
     } finally {
       setLoading(false);
     }
@@ -63,8 +64,8 @@ export const TwoFactorSection = () => {
       setEnabled(false);
       setCode('');
       setSuccess('Two-factor authentication has been disabled.');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to disable 2FA');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to disable 2FA'));
     } finally {
       setLoading(false);
     }

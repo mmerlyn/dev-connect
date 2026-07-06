@@ -3,10 +3,10 @@ import { Server } from 'socket.io';
 import { app } from './app.js';
 import { config } from './config/index.js';
 import { connectRedis, disconnectRedis } from './shared/database/redis.js';
+import { startWriteBehindFlusher, stopWriteBehindFlusher } from './shared/redis/writeBehind.js';
 import { prisma } from './shared/database/client.js';
 import { SOCKET_CONFIG } from './shared/socket/socket.config.js';
 import { setupRedisAdapter, RedisPresence } from './shared/socket/redis-adapter.js';
-import { initializeRecommendationQueue } from './modules/recommendation/recommendation.queue.js';
 import { SocketService } from './shared/socket/socket.service.js';
 import { logger } from './shared/utils/logger.js';
 
@@ -39,6 +39,7 @@ const startServer = async () => {
       try {
         await setupRedisAdapter(io);
         await RedisPresence.initialize();
+        startWriteBehindFlusher();
         logger.info('Socket.IO Redis adapter enabled');
       } catch (err) {
         logger.warn({ err }, 'Redis adapter setup failed (non-fatal)');
@@ -50,10 +51,6 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info('Database connected');
 
-    if (redisConnected && initializeRecommendationQueue()) {
-      logger.info('Recommendation training queue initialized');
-    }
-
     httpServer.listen(config.port, () => {
       logger.info({ port: config.port, env: config.env, frontendUrl: config.frontendUrl }, 'Server running');
     });
@@ -63,12 +60,19 @@ const startServer = async () => {
   }
 };
 
-process.on('SIGINT', async () => {
-  logger.info('Shutting down gracefully...');
+const shutdown = async (signal: string) => {
+  logger.info({ signal }, 'Shutting down gracefully...');
   await SocketService.shutdown();
+  await stopWriteBehindFlusher();
   await disconnectRedis();
   await prisma.$disconnect();
   process.exit(0);
-});
+};
+
+// docker stop / docker kill send SIGTERM, not SIGINT — without this handler
+// a killed gateway container got zero graceful shutdown (no
+// 'server-shutdown' broadcast, no clean socket/Redis teardown).
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 startServer();

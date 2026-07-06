@@ -21,18 +21,3 @@ export const useFollowingFeed = (page = 1, limit = 20) => {
     queryFn: () => feedApi.getFollowingFeed(page, limit),
   });
 };
-
-export const useRecommendedFeed = (page = 1, limit = 20) => {
-  return useQuery({
-    queryKey: ['feed', 'recommended', page, limit],
-    queryFn: () => feedApi.getRecommendedFeed(page, limit),
-  });
-};
-
-export const useRecommendationStatus = () => {
-  return useQuery({
-    queryKey: ['feed', 'recommendation-status'],
-    queryFn: () => feedApi.getRecommendationStatus(),
-    staleTime: 60 * 1000, // 1 minute
-  });
-};

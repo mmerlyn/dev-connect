@@ -35,8 +35,14 @@ export async function setupRedisAdapter(io: Server): Promise<void> {
   logger.info('Redis adapter connected for Socket.io horizontal scaling');
 }
 
-const PRESENCE_PREFIX = 'presence:';
-const PRESENCE_TTL = 300;
+// Presence is TTL-based: each connected socket owns a heartbeat key that
+// expires if nobody refreshes it. A client that vanishes without a clean
+// disconnect (crashed tab, dropped network) still reads as offline within
+// one TTL window, instead of lingering online forever like a plain
+// connect/disconnect flag would.
+const PRESENCE_TTL_SECONDS = 30;
+const socketKey = (userId: string, socketId: string) => `presence:ttl:${userId}:${socketId}`;
+const indexKey = (userId: string) => `presence:sockets:${userId}`;
 
 export class RedisPresence {
   private static redisClient: ReturnType<typeof createClient> | null = null;
@@ -58,18 +64,29 @@ export class RedisPresence {
     await RedisPresence.redisClient.connect();
   }
 
+  // Called on socket connect, and again on every heartbeat while connected.
   static async setOnline(userId: string, socketId: string) {
     if (!RedisPresence.redisClient) return;
-    const key = `${PRESENCE_PREFIX}${userId}`;
-    await RedisPresence.redisClient.sAdd(key, socketId);
-    await RedisPresence.redisClient.expire(key, PRESENCE_TTL);
+    await RedisPresence.redisClient.sAdd(indexKey(userId), socketId);
+    await RedisPresence.redisClient.set(socketKey(userId, socketId), '1', {
+      EX: PRESENCE_TTL_SECONDS,
+    });
   }
 
+  // Alias kept for call-site clarity: a heartbeat is just re-asserting "online".
+  static async refresh(userId: string, socketId: string) {
+    await RedisPresence.setOnline(userId, socketId);
+  }
+
+  // Called on clean disconnect. Unclean disconnects are handled by the TTL
+  // expiring the heartbeat key on its own — isOnline() self-heals the index
+  // the next time it's checked.
   static async setOffline(userId: string, socketId: string) {
     if (!RedisPresence.redisClient) return;
-    const key = `${PRESENCE_PREFIX}${userId}`;
+    const key = indexKey(userId);
     await RedisPresence.redisClient.sRem(key, socketId);
-    // Clean up empty sets
+    await RedisPresence.redisClient.del(socketKey(userId, socketId));
+
     const remaining = await RedisPresence.redisClient.sCard(key);
     if (remaining === 0) {
       await RedisPresence.redisClient.del(key);
@@ -78,9 +95,28 @@ export class RedisPresence {
 
   static async isOnline(userId: string): Promise<boolean> {
     if (!RedisPresence.redisClient) return false;
-    const key = `${PRESENCE_PREFIX}${userId}`;
-    const count = await RedisPresence.redisClient.sCard(key);
-    return count > 0;
+
+    const key = indexKey(userId);
+    const socketIds = await RedisPresence.redisClient.sMembers(key);
+    if (socketIds.length === 0) return false;
+
+    const staleIds: string[] = [];
+    let aliveCount = 0;
+
+    for (const id of socketIds) {
+      const alive = await RedisPresence.redisClient.exists(socketKey(userId, id));
+      if (alive) {
+        aliveCount++;
+      } else {
+        staleIds.push(id);
+      }
+    }
+
+    if (staleIds.length > 0) {
+      await RedisPresence.redisClient.sRem(key, staleIds);
+    }
+
+    return aliveCount > 0;
   }
 
   static async getOnlineUsers(userIds: string[]): Promise<string[]> {

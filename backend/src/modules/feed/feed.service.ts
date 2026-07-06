@@ -2,7 +2,6 @@ import { prisma } from '../../shared/database/client.js';
 import { redisCache } from '../../shared/database/redis.js';
 
 export class FeedService {
-  // Get personalized feed
   static async getPersonalizedFeed(userId: string, page: number = 1, limit: number = 20) {
     const cacheKey = `feed:user:${userId}:page:${page}`;
 
@@ -14,7 +13,6 @@ export class FeedService {
 
     const skip = (page - 1) * limit;
 
-    // Get user's following list
     const following = await prisma.follow.findMany({
       where: { followerId: userId },
       select: { followingId: true },
@@ -23,7 +21,6 @@ export class FeedService {
     const followingIds = following.map((f) => f.followingId);
     followingIds.push(userId); // Include own posts
 
-    // Get posts from followed users
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
         where: {
@@ -56,7 +53,6 @@ export class FeedService {
       }),
     ]);
 
-    // Check if user has liked each post
     const postsWithLikeStatus = await Promise.all(
       posts.map(async (post) => {
         const isLiked = await prisma.like.findUnique({
@@ -122,7 +118,6 @@ export class FeedService {
       },
     });
 
-    // Check if user has liked each post
     if (userId) {
       const postsWithLikeStatus = await Promise.all(
         sortedPosts.map(async (post) => {
@@ -143,7 +138,6 @@ export class FeedService {
     return { posts: sortedPosts, total, page, limit };
   }
 
-  // Get posts from followed users only
   static async getFollowingFeed(userId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 

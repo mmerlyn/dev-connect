@@ -8,7 +8,6 @@ export const VerifyEmail = () => {
   const token = searchParams.get('token');
 
   const [isLoading, setIsLoading] = useState(true);
-  const [_success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export const VerifyEmail = () => {
           throw new Error(data.message || 'Failed to verify email');
         }
 
-        setSuccess(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {

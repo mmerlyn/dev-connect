@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useSocket } from '../contexts/SocketContext';
 import {
   useConversations,
   useMessages,
@@ -10,12 +11,24 @@ import {
 import { useUserById } from '../hooks/useUsers';
 import { ConversationItem, MessageBubble, ChatHeader, MessageInput } from '../components/chat';
 
+const TYPING_EMIT_INTERVAL_MS = 2000;
+const TYPING_DECAY_MS = 3000;
+
 export const Messages = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedUserId = searchParams.get('user');
   const { user: currentUser } = useAuthStore();
+  const { socket } = useSocket();
   const [messageInput, setMessageInput] = useState('');
+  const [isPeerTyping, setIsPeerTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastTypingEmitRef = useRef(0);
+  const typingDecayTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Tracks the conversation the typing indicator currently reflects, so we
+  // can reset it during render when the user switches conversations instead
+  // of doing it as a side effect (see React's "adjusting state when a prop
+  // changes" pattern).
+  const [typingIndicatorFor, setTypingIndicatorFor] = useState(selectedUserId);
 
   const { data: conversations, isLoading: conversationsLoading } = useConversations();
   const { data: messagesData, isLoading: messagesLoading } = useMessages(selectedUserId || '');
@@ -45,6 +58,45 @@ export const Messages = () => {
       markAsRead.mutate(selectedUserId);
     }
   }, [selectedUserId, selectedConversation, markAsRead]);
+
+  // Ephemeral typing indicator: a 'typing' event just means "still typing as
+  // of this instant." With no explicit "stopped typing" signal, we decay the
+  // indicator locally if no further event arrives within TYPING_DECAY_MS.
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTyping = ({ userId }: { userId: string }) => {
+      if (userId !== selectedUserId) return;
+
+      setIsPeerTyping(true);
+      clearTimeout(typingDecayTimeoutRef.current);
+      typingDecayTimeoutRef.current = setTimeout(() => setIsPeerTyping(false), TYPING_DECAY_MS);
+    };
+
+    socket.on('typing', handleTyping);
+    return () => {
+      socket.off('typing', handleTyping);
+    };
+  }, [socket, selectedUserId]);
+
+  if (selectedUserId !== typingIndicatorFor) {
+    // Any stale decay timeout from the previous conversation is harmless —
+    // it will just set isPeerTyping to false again when it fires, which is
+    // already the state we're resetting to here.
+    setTypingIndicatorFor(selectedUserId);
+    setIsPeerTyping(false);
+  }
+
+  const handleMessageInputChange = (value: string) => {
+    setMessageInput(value);
+
+    if (!socket || !selectedUserId) return;
+    const now = Date.now();
+    if (now - lastTypingEmitRef.current > TYPING_EMIT_INTERVAL_MS) {
+      lastTypingEmitRef.current = now;
+      socket.emit('typing', { recipientId: selectedUserId });
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +157,7 @@ export const Messages = () => {
           <div className="flex-1 flex flex-col">
             {showChatArea ? (
               <>
-                <ChatHeader user={chatUser} isLoading={newChatUserLoading} />
+                <ChatHeader user={chatUser} isLoading={newChatUserLoading} isTyping={isPeerTyping} />
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messagesLoading ? (
@@ -134,7 +186,7 @@ export const Messages = () => {
 
                 <MessageInput
                   value={messageInput}
-                  onChange={setMessageInput}
+                  onChange={handleMessageInputChange}
                   onSubmit={handleSendMessage}
                   isSending={sendMessage.isPending}
                 />

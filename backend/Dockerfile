@@ -3,11 +3,12 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies for native modules (sharp, bcrypt, tensorflow)
+# Without OpenSSL present, Prisma can't detect the runtime's actual OpenSSL
+# version at generate time and silently defaults to guessing 1.1.x — which
+# then mismatches the production stage's real OpenSSL 3.0.x (Debian
+# bookworm) and fails at startup with "could not locate the Query Engine".
 RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
@@ -15,7 +16,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install all dependencies (including dev for build)
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -42,10 +43,17 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm ci --legacy-peer-deps --only=production
 
-# Generate Prisma client in production
-RUN npx prisma generate
+# Reuse the client generated in the builder stage rather than running
+# `prisma generate` again here: this stage's node_modules has no `prisma`
+# CLI (it's a devDependency, excluded by --only=production), so a bare
+# `npx prisma generate` would silently fetch whatever "latest" is on the
+# registry instead of the version this project is pinned to — which broke
+# outright once registry-latest moved to a Prisma major version with an
+# incompatible schema format.
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist

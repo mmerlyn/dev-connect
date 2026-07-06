@@ -71,12 +71,10 @@ class SocketMetricsCollector {
 
     this.snapshots.push(snapshot);
 
-    // Reset rolling counters
     this.rollingEventCount = 0;
     this.rollingLatencySum = 0;
     this.rollingLatencyCount = 0;
 
-    // Trim old snapshots
     if (this.snapshots.length > METRICS_CONFIG.maxSnapshots) {
       this.snapshots = this.snapshots.slice(-METRICS_CONFIG.maxSnapshots);
     }
@@ -86,7 +84,6 @@ class SocketMetricsCollector {
     const now = Date.now();
     const windowStart = now - METRICS_CONFIG.windowSizeMs;
 
-    // Calculate events/sec from recent snapshots
     const recentSnapshots = this.snapshots.filter(
       (s) => s.timestamp >= windowStart
     );
@@ -123,5 +120,4 @@ class SocketMetricsCollector {
   }
 }
 
-// Singleton
 export const socketMetrics = new SocketMetricsCollector();

@@ -24,7 +24,7 @@ export const OAuthCallback = () => {
         try {
           await setTokens(accessToken, refreshToken);
           navigate('/', { replace: true });
-        } catch (err) {
+        } catch {
           setError('Failed to complete authentication. Please try again.');
           setTimeout(() => navigate('/login'), 3000);
         }

@@ -1,26 +1,23 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useRecommendedFeed, useTrendingPosts, useFollowingFeed } from '../hooks/useFeed';
+import { useTrendingPosts, useFollowingFeed } from '../hooks/useFeed';
 import { PostForm, PostCard } from '../components';
 
-type FeedTab = 'foryou' | 'following' | 'trending';
+type FeedTab = 'following' | 'trending';
 
 export const Home = () => {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<FeedTab>('foryou');
+  const [activeTab, setActiveTab] = useState<FeedTab>('following');
 
-  const recommended = useRecommendedFeed();
   const following = useFollowingFeed();
   const trending = useTrendingPosts();
 
   const tabs: { key: FeedTab; label: string }[] = [
-    { key: 'foryou', label: 'For You' },
     { key: 'following', label: 'Following' },
     { key: 'trending', label: 'Trending' },
   ];
 
   const feedMap = {
-    foryou: recommended,
     following: following,
     trending: trending,
   };
@@ -79,8 +76,6 @@ export const Home = () => {
             <p className="text-gray-500">
               {activeTab === 'following'
                 ? 'Follow some developers to see their posts here!'
-                : activeTab === 'foryou'
-                ? 'Interact with posts to get personalized recommendations!'
                 : 'No trending posts yet. Be the first to share something!'}
             </p>
           </div>

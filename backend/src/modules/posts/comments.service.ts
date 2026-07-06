@@ -2,7 +2,6 @@ import { prisma } from '../../shared/database/client.js';
 import { SocketService } from '../../shared/socket/socket.service.js';
 
 export class CommentsService {
-  // Get post comments (only top-level, with replies count)
   static async getPostComments(postId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -43,7 +42,6 @@ export class CommentsService {
     return { comments, total, page, limit };
   }
 
-  // Get comment replies
   static async getCommentReplies(commentId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -75,7 +73,6 @@ export class CommentsService {
     return { replies, total, page, limit };
   }
 
-  // Add comment to post
   static async addComment(postId: string, userId: string, content: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -109,7 +106,6 @@ export class CommentsService {
       },
     });
 
-    // Create notification if not own post
     if (post.authorId !== userId) {
       const notification = await prisma.notification.create({
         data: {
@@ -131,14 +127,12 @@ export class CommentsService {
           },
         },
       });
-      // Emit real-time notification
       SocketService.sendNotification(post.authorId, notification);
     }
 
     return comment;
   }
 
-  // Reply to comment
   static async replyToComment(commentId: string, userId: string, content: string) {
     const parentComment = await prisma.comment.findUnique({
       where: { id: commentId },
@@ -173,7 +167,6 @@ export class CommentsService {
       },
     });
 
-    // Create notification for comment author
     if (parentComment.authorId !== userId) {
       const notification = await prisma.notification.create({
         data: {
@@ -195,14 +188,12 @@ export class CommentsService {
           },
         },
       });
-      // Emit real-time notification
       SocketService.sendNotification(parentComment.authorId, notification);
     }
 
     return reply;
   }
 
-  // Update comment
   static async updateComment(commentId: string, userId: string, content: string) {
     const existingComment = await prisma.comment.findUnique({
       where: { id: commentId },
@@ -240,7 +231,6 @@ export class CommentsService {
     return comment;
   }
 
-  // Delete comment
   static async deleteComment(commentId: string, userId: string) {
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
@@ -261,7 +251,6 @@ export class CommentsService {
     return true;
   }
 
-  // Like comment
   static async likeComment(commentId: string, userId: string) {
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
@@ -291,7 +280,6 @@ export class CommentsService {
       },
     });
 
-    // Create notification if not own comment
     if (comment.authorId !== userId) {
       const notification = await prisma.notification.create({
         data: {
@@ -312,14 +300,12 @@ export class CommentsService {
           },
         },
       });
-      // Emit real-time notification
       SocketService.sendNotification(comment.authorId, notification);
     }
 
     return like;
   }
 
-  // Unlike comment
   static async unlikeComment(commentId: string, userId: string) {
     const like = await prisma.like.findUnique({
       where: {

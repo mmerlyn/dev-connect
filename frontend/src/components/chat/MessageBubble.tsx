@@ -18,6 +18,7 @@ export const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => (
       <p className="break-words">{message.content}</p>
       <p className={`text-xs mt-1 ${isOwn ? 'text-blue-200' : 'text-gray-400'}`}>
         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+        {isOwn && message.read && ' · Seen'}
       </p>
     </div>
   </div>

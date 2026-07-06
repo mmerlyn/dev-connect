@@ -118,7 +118,7 @@ export class UploadService {
         })
       );
     } catch {
-      // Ignore errors
+      // Best-effort cleanup of the old file — not worth failing the request over.
     }
   }
 
@@ -129,7 +129,7 @@ export class UploadService {
       const filePath = path.join(__dirname, '../../..', url);
       await fs.unlink(filePath);
     } catch {
-      // Ignore errors
+      // Best-effort cleanup of the old file — not worth failing the request over.
     }
   }
 

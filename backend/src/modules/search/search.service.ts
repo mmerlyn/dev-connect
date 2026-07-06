@@ -1,10 +1,8 @@
 import { prisma } from '../../shared/database/client.js';
 
 export class SearchService {
-  // Universal search
   static async universalSearch(query: string, _page: number = 1, _limit: number = 20) {
     const [users, posts, hashtags] = await Promise.all([
-      // Search users
       prisma.user.findMany({
         where: {
           OR: [
@@ -29,7 +27,6 @@ export class SearchService {
         take: 10,
       }),
 
-      // Search posts
       prisma.post.findMany({
         where: {
           OR: [
@@ -56,7 +53,6 @@ export class SearchService {
         take: 10,
       }),
 
-      // Search hashtags
       prisma.hashtag.findMany({
         where: {
           name: { contains: query.replace('#', ''), mode: 'insensitive' },
@@ -69,7 +65,6 @@ export class SearchService {
     return { users, posts, hashtags };
   }
 
-  // Search users only
   static async searchUsers(query: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -119,7 +114,6 @@ export class SearchService {
     return { users, total, page, limit };
   }
 
-  // Search posts only
   static async searchPosts(query: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -169,7 +163,6 @@ export class SearchService {
     return { posts, total, page, limit };
   }
 
-  // Search hashtags
   static async searchHashtags(query: string) {
     const hashtags = await prisma.hashtag.findMany({
       where: {
@@ -182,7 +175,6 @@ export class SearchService {
     return hashtags;
   }
 
-  // Get posts by hashtag
   static async getPostsByHashtag(hashtag: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
     const normalizedTag = hashtag.toLowerCase().replace('#', '');

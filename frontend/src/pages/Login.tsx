@@ -1,25 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { OAuthButtons } from '../components/auth/OAuthButtons';
 import { TwoFactorVerification } from '../components/auth/TwoFactorVerification';
 import { LoginForm } from '../components/auth/LoginForm';
 
+interface LocationState {
+  from?: { pathname: string };
+}
+
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { login, verify2FA, isLoading, error, clearError, pending2FAUserId, clear2FA } = useAuthStore();
-  const [oauthError, setOauthError] = useState<string | null>(null);
+  const oauthError = searchParams.get('error') === 'oauth_failed'
+    ? 'OAuth authentication failed. Please try again.'
+    : null;
 
-  const from = (location.state as any)?.from?.pathname || '/';
-
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'oauth_failed') {
-      setOauthError('OAuth authentication failed. Please try again.');
-    }
-  }, [searchParams]);
+  const from = (location.state as LocationState | null)?.from?.pathname || '/';
 
   useEffect(() => {
     return () => { clear2FA(); };

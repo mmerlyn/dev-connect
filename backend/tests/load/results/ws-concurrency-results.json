@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-07-03T00:24:13.905Z",
+  "testName": "WebSocket Concurrency + Message Delivery Latency",
+  "config": {
+    "numUsers": 400,
+    "connectionsPerUser": 5,
+    "targetConcurrentConnections": 2000,
+    "rampDuration": "40s",
+    "holdDuration": "90s"
+  },
+  "connections": {
+    "peakVUs": 2015,
+    "wsConnectSuccess": 1996,
+    "wsConnectErrors": 8,
+    "wsSessions": 2008
+  },
+  "messages": {
+    "sent": 2602,
+    "sendFailed": 1718
+  },
+  "sendRequestMs": {
+    "avg": "21.03",
+    "p95": "124.80",
+    "max": "209.46"
+  },
+  "deliveryLatencyMs": {
+    "count": 4021,
+    "avg": "16.89",
+    "p50": "14.00",
+    "p95": "33.00",
+    "p99": null,
+    "max": "61.00"
+  }
+}

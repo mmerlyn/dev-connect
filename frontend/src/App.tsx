@@ -21,7 +21,6 @@ function App() {
   const { isAuthenticated, getCurrentUser } = useAuthStore();
 
   useEffect(() => {
-    // Check if user is authenticated on app load
     const token = localStorage.getItem('accessToken');
     if (token && !isAuthenticated) {
       getCurrentUser();

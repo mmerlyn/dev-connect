@@ -19,5 +19,11 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Destructuring a field off an object just to exclude it from the rest
+      // (e.g. `const { confirmPassword, ...body } = formData`) is intentional,
+      // not an unused variable.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
   },
 ])

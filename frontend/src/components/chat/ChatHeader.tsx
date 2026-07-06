@@ -9,9 +9,10 @@ interface ChatUser {
 interface ChatHeaderProps {
   user: ChatUser | null;
   isLoading: boolean;
+  isTyping?: boolean;
 }
 
-export const ChatHeader = ({ user, isLoading }: ChatHeaderProps) => {
+export const ChatHeader = ({ user, isLoading, isTyping }: ChatHeaderProps) => {
   if (isLoading) {
     return (
       <div className="p-4 border-b border-gray-200">
@@ -50,7 +51,9 @@ export const ChatHeader = ({ user, isLoading }: ChatHeaderProps) => {
         >
           {user.displayName}
         </Link>
-        <p className="text-sm text-gray-500">@{user.username}</p>
+        <p className="text-sm text-gray-500">
+          {isTyping ? <span className="text-blue-500 italic">typing...</span> : `@${user.username}`}
+        </p>
       </div>
     </div>
   );

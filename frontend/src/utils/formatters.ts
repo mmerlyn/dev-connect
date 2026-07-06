@@ -1,15 +1,9 @@
 import { formatDistanceToNow, format } from 'date-fns';
 
-/**
- * Format a date to relative time (e.g., "5 minutes ago")
- */
 export const formatRelativeTime = (date: string | Date): string => {
   return formatDistanceToNow(new Date(date), { addSuffix: true });
 };
 
-/**
- * Format a date to short relative time without suffix (e.g., "5m", "2h", "3d")
- */
 export const formatShortTime = (date: string | Date): string => {
   const now = new Date();
   const then = new Date(date);
@@ -22,24 +16,15 @@ export const formatShortTime = (date: string | Date): string => {
   return format(then, 'MMM d');
 };
 
-/**
- * Format a date to full date string (e.g., "January 1, 2024")
- */
 export const formatFullDate = (date: string | Date): string => {
   return format(new Date(date), 'MMMM d, yyyy');
 };
 
-/**
- * Truncate text to a maximum length with ellipsis
- */
 export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).trim()}...`;
 };
 
-/**
- * Format a number with K/M suffix (e.g., 1500 -> "1.5K")
- */
 export const formatNumber = (num: number): string => {
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
@@ -50,9 +35,6 @@ export const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-/**
- * Get initials from a name (e.g., "John Doe" -> "JD")
- */
 export const getInitials = (name: string): string => {
   return name
     .split(' ')
@@ -61,9 +43,6 @@ export const getInitials = (name: string): string => {
     .join('');
 };
 
-/**
- * Generate a placeholder avatar URL based on name
- */
 export const getAvatarPlaceholder = (name: string): string => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
 };

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import apiClient from '../../api/client';
+import { getErrorMessage } from '../../utils/errors';
 
 export const PasswordChangeSection = () => {
   const [form, setForm] = useState({
@@ -34,8 +35,8 @@ export const PasswordChangeSection = () => {
       });
       setSuccess('Password changed successfully');
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to change password');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to change password'));
     } finally {
       setLoading(false);
     }
